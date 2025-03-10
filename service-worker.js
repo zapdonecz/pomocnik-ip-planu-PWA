@@ -2,14 +2,12 @@ const CACHE_NAME = 'ip-hlidac-cache-v1';
 const urlsToCache = [
   './',
   './index.html',
-  './style.css',
-  './script.js',  // Uprav, pokud máš jiný název souboru s logikou
+  './style.css',      // Uprav podle názvu tvého CSS souboru, pokud nějaký používáš
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png'
 ];
 
-// Instalace: otevře cache a uloží vyjmenované soubory
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -20,7 +18,12 @@ self.addEventListener('install', event => {
   );
 });
 
-// Aktivace: odstraní staré cache verze
+self.addEventListener('message', event => {
+  if (event.data && event.data.action === 'skipWaiting') {
+    self.skipWaiting();
+  }
+});
+
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(cacheNames =>
@@ -36,7 +39,6 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Intercept fetch requestů: nejprve se pokusí najít odpověď v cache, pokud nenajde, stáhne ze sítě
 self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request)

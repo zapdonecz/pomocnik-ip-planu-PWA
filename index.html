@@ -89,7 +89,7 @@
     
     <!-- Export/Import a Nastavení -->
     <div class="mb-4">
-      <button class="btn btn-primary" onclick="showExport()">Export dat</button>
+      <button class="btn btn-primary" onclick="exportDataDownload()">Export dat</button>
       <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">Import dat</button>
       <button class="btn btn-secondary" onclick="showSettings()">Nastavení</button>
       <input type="file" id="importFile" style="display:none" onchange="importData(event)">
@@ -131,28 +131,8 @@
     
     <!-- Footer s informací o verzi -->
     <footer class="text-center mt-5">
-      <small>Program vytvořil Přemysl Pozděna, verze 1.0.1.</small>
+      <small>Program vytvořil Přemysl Pozděna, verze 1.0.2.</small>
     </footer>
-  </div>
-  
-  <!-- Modály -->
-  <!-- Export modal -->
-  <div class="modal" tabindex="-1" id="exportModal">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Export dat</h5>
-          <button type="button" class="btn-close" onclick="hideExport()"></button>
-        </div>
-        <div class="modal-body">
-          <textarea id="exportData" class="form-control" rows="10" readonly></textarea>
-          <p class="mt-2">Zkopíruj data nebo si je ulož do souboru.</p>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" onclick="hideExport()">Zavřít</button>
-        </div>
-      </div>
-    </div>
   </div>
   
   <!-- Nastavení modal -->
@@ -180,6 +160,20 @@
             <div class="mb-3">
               <label for="settingsContractThreshold" class="form-label">Prahová hodnota pro smlouvy (dny):</label>
               <input type="number" class="form-control" id="settingsContractThreshold" min="1" required>
+            </div>
+            <div class="mb-3">
+              <label for="settingsCalendarThreshold" class="form-label">Kalendář – zobrazit v úkolech do (dny):</label>
+              <input type="number" class="form-control" id="settingsCalendarThreshold" min="1" required>
+            </div>
+            <hr>
+            <h6>Notifikace</h6>
+            <div class="mb-3 form-check">
+              <input type="checkbox" class="form-check-input" id="settingsEnableNotifications">
+              <label class="form-check-label" for="settingsEnableNotifications">Povolit notifikace</label>
+            </div>
+            <div class="mb-3">
+              <label for="settingsNotificationInterval" class="form-label">Interval notifikací (minuty):</label>
+              <input type="number" class="form-control" id="settingsNotificationInterval" min="1" required>
             </div>
             <button type="submit" class="btn btn-primary">Uložit nastavení</button>
             <button type="button" class="btn btn-danger" onclick="resetData()">Resetovat data</button>
@@ -292,13 +286,13 @@
           <button type="button" class="btn-close" onclick="hideUpdateModal()"></button>
         </div>
         <div class="modal-body">
-          <p>Nová verze: 1.0.1</p>
+          <p>Nová verze: 1.0.2</p>
           <p>Změny:</p>
           <ul>
-            <li>Přidáno barevné označení úkolů</li>
-            <li>Přidána notifikace o nové verzi aplikace</li>
-            <li>Vylepšen tmavý režim (světlé písmo)</li>
-            <li>Přidán kalendář pro schůzky a poznámky</li>
+            <li>Export dat nyní stáhne JSON soubor.</li>
+            <li>Kalendářové události lze odkrývat a skrývat (detaily).</li>
+            <li>Nastavení nyní obsahuje prahovou hodnotu pro kalendářové události.</li>
+            <li>Přidána základní implementace Notification API s možností nastavení intervalu notifikací.</li>
           </ul>
         </div>
         <div class="modal-footer">
@@ -317,21 +311,22 @@
        Klient: { id, name, birthdate, lastEvaluation, contractStart, contractExpiration, detailsVisible, plans: [] }
        Plán: { id, name, notes, expirationDate, completed, steps: [] }
        Krok: { id, description, date, completed }
-       Událost: { id, title, date, details }
+       Událost: { id, title, date, details, detailsVisible }
     */
     let clients = [];
     let calendarEvents = [];
-    // Původní nastavení prahových hodnot
+    // Rozšířená výchozí nastavení
     const defaultSettings = {
       evalThreshold: 7,
       planThreshold: 7,
       stepThreshold: 7,
       contractThreshold: 60,
-      // Pro kalendář můžeme pozdě přidat prahovou hodnotu, pokud bude třeba
-      calendarThreshold: 3
+      calendarThreshold: 3,
+      enableNotifications: false,
+      notificationInterval: 10
     };
     let settings = {};
-    const appVersion = "1.0.1";
+    const appVersion = "1.0.2";
     
     document.addEventListener('DOMContentLoaded', () => {
       loadData();
@@ -344,6 +339,8 @@
       renderCalendar();
       loadDarkMode();
       registerServiceWorker();
+      initNotifications();
+      startNotificationInterval();
     });
     
     function updateToday() {
@@ -351,17 +348,19 @@
       document.getElementById('todayDate').textContent = 'Dnes je: ' + today.toLocaleDateString();
     }
     
-    // Export dat (pouze klienti – původní verze, můžeš rozšířit o další pole, pokud chceš)
-    function showExport() {
-      const exportModal = new bootstrap.Modal(document.getElementById('exportModal'));
+    // Export dat jako soubor
+    function exportDataDownload() {
       const data = { clients, calendarEvents, settings };
-      document.getElementById('exportData').value = JSON.stringify(data, null, 2);
-      exportModal.show();
-    }
-    function hideExport() {
-      const modalEl = document.getElementById('exportModal');
-      const modal = bootstrap.Modal.getInstance(modalEl);
-      modal.hide();
+      const dataStr = JSON.stringify(data, null, 2);
+      const blob = new Blob([dataStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "ipHlidac_export.json";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     }
     
     function importData(event) {
@@ -418,6 +417,9 @@
       const data = localStorage.getItem('ipHlidacCalendar');
       if (data) {
         calendarEvents = JSON.parse(data);
+        calendarEvents.forEach(ev => {
+          if (typeof ev.detailsVisible === 'undefined') ev.detailsVisible = false;
+        });
       }
     }
     
@@ -528,9 +530,17 @@
       } else {
         html = "<ul class='list-group'>";
         calendarEvents.forEach(event => {
-          html += `<li class="list-group-item d-flex justify-content-between align-items-center">
-                     ${event.title} - ${new Date(event.date).toLocaleDateString()}
-                     <button class="btn btn-sm btn-danger" onclick="deleteCalendarEvent('${event.id}')">X</button>
+          html += `<li class="list-group-item d-flex flex-column">
+                     <div class="d-flex justify-content-between align-items-center">
+                       <span>${event.title} - ${new Date(event.date).toLocaleDateString()}</span>
+                       <div>
+                         ${event.details ? `<button class="btn btn-sm btn-info me-1" onclick="toggleCalendarDetails('${event.id}')">
+                           ${event.detailsVisible ? 'Skrýt detaily' : 'Zobrazit detaily'}
+                         </button>` : ""}
+                         <button class="btn btn-sm btn-danger" onclick="deleteCalendarEvent('${event.id}')">X</button>
+                       </div>
+                     </div>
+                     ${event.detailsVisible && event.details ? `<div class="mt-2">${event.details}</div>` : ""}
                    </li>`;
         });
         html += "</ul>";
@@ -548,7 +558,8 @@
           id: generateId(),
           title: title,
           date: date,
-          details: details
+          details: details,
+          detailsVisible: false
         };
         calendarEvents.push(newEvent);
         saveCalendarEvents();
@@ -563,6 +574,15 @@
       saveCalendarEvents();
       renderCalendar();
       renderTasks();
+    }
+    
+    function toggleCalendarDetails(eventId) {
+      const event = calendarEvents.find(ev => ev.id === eventId);
+      if (event) {
+        event.detailsVisible = !event.detailsVisible;
+        saveCalendarEvents();
+        renderCalendar();
+      }
     }
     
     function generateId() {
@@ -1017,6 +1037,9 @@
       document.getElementById('settingsPlanThreshold').value = settings.planThreshold;
       document.getElementById('settingsStepThreshold').value = settings.stepThreshold;
       document.getElementById('settingsContractThreshold').value = settings.contractThreshold;
+      document.getElementById('settingsCalendarThreshold').value = settings.calendarThreshold;
+      document.getElementById('settingsEnableNotifications').checked = settings.enableNotifications;
+      document.getElementById('settingsNotificationInterval').value = settings.notificationInterval;
       const modal = new bootstrap.Modal(document.getElementById('settingsModal'));
       modal.show();
     }
@@ -1033,10 +1056,14 @@
       settings.planThreshold = parseInt(document.getElementById('settingsPlanThreshold').value, 10);
       settings.stepThreshold = parseInt(document.getElementById('settingsStepThreshold').value, 10);
       settings.contractThreshold = parseInt(document.getElementById('settingsContractThreshold').value, 10);
+      settings.calendarThreshold = parseInt(document.getElementById('settingsCalendarThreshold').value, 10);
+      settings.enableNotifications = document.getElementById('settingsEnableNotifications').checked;
+      settings.notificationInterval = parseInt(document.getElementById('settingsNotificationInterval').value, 10);
       saveSettings();
       hideSettings();
       renderSummary();
       renderTasks();
+      startNotificationInterval();
     }
     
     function clearCompleted() {
@@ -1139,11 +1166,85 @@
       });
     }
     
-    // Zaregistruj Service Worker (původní kód)
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./service-worker.js')
-        .then(() => console.log('Service Worker registrován'))
-        .catch(err => console.error('Chyba při registraci Service Workeru:', err));
+    // Notification API
+    function initNotifications() {
+      if ("Notification" in window) {
+        if (Notification.permission === "default") {
+          Notification.requestPermission().then(permission => {
+            if (permission === "granted") {
+              console.log("Notifikace povoleny.");
+            }
+          });
+        }
+      }
+    }
+    
+    function showNotification(title, body) {
+      if (Notification.permission === "granted") {
+        new Notification(title, { body: body, icon: "icons/icon-192.png" });
+      }
+    }
+    
+    function getPendingTasks() {
+      let tasks = [];
+      clients.forEach(client => {
+        if (client.lastEvaluation) {
+          const evalInfo = calculateEvalDays(client.lastEvaluation);
+          if (evalInfo.daysLeft <= settings.evalThreshold) {
+            tasks.push(`Hodnocení u ${client.name} - zbývá ${evalInfo.daysLeft} dní`);
+          }
+        } else {
+          tasks.push(`U ${client.name} chybí hodnocení`);
+        }
+        client.plans.forEach(plan => {
+          const daysLeft = calculateDaysLeft(plan.expirationDate);
+          if (!plan.completed && daysLeft <= settings.planThreshold) {
+            tasks.push(`Plán "${plan.name}" u ${client.name} - zbývá ${daysLeft} dní`);
+          }
+          plan.steps.forEach(step => {
+            if (!step.completed) {
+              const daysLeftStep = calculateDaysLeft(step.date);
+              if (daysLeftStep <= settings.stepThreshold) {
+                tasks.push(`Krok "${step.description}" u plánu "${plan.name}" - zbývá ${daysLeftStep} dní`);
+              }
+            }
+          });
+        });
+        if (client.contractExpiration) {
+          const contractDaysLeft = calculateDaysLeft(client.contractExpiration);
+          if (contractDaysLeft <= settings.contractThreshold) {
+            tasks.push(`Smlouva u ${client.name} - zbývá ${contractDaysLeft} dní`);
+          }
+        } else {
+          tasks.push(`U ${client.name} není smlouva nastavena`);
+        }
+      });
+      calendarEvents.forEach(event => {
+        const daysLeft = calculateDaysLeft(event.date);
+        if (daysLeft <= settings.calendarThreshold) {
+          tasks.push(`Událost "${event.title}" - zbývá ${daysLeft} dní`);
+        }
+      });
+      return tasks;
+    }
+    
+    function checkAndNotify() {
+      if (!settings.enableNotifications) return;
+      const tasks = getPendingTasks();
+      if (tasks.length > 0) {
+        let notificationBody = tasks.slice(0, 5).join("\n");
+        if (tasks.length > 5) {
+          notificationBody += "\n... a další úkoly";
+        }
+        showNotification("Máte úkoly k vyřízení", notificationBody);
+      }
+    }
+    
+    function startNotificationInterval() {
+      if (window.notificationIntervalId) clearInterval(window.notificationIntervalId);
+      if (settings.enableNotifications) {
+        window.notificationIntervalId = setInterval(checkAndNotify, settings.notificationInterval * 60000);
+      }
     }
   </script>
 </body>

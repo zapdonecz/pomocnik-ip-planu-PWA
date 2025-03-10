@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ip-hlidac-cache-v1';
+const CACHE_NAME = 'ip-hlidac-cache-v1.0.2';
 const urlsToCache = [
   './',
   './index.html',
@@ -18,7 +18,6 @@ self.addEventListener('install', event => {
   );
 });
 
-// Posluchač zpráv pro aktualizaci (skipWaiting)
 self.addEventListener('message', event => {
   if (event.data && event.data.action === 'skipWaiting') {
     self.skipWaiting();

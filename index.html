@@ -6,40 +6,45 @@
   <link rel="manifest" href="manifest.json">
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- FullCalendar CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet" />
   <style>
     body {
       padding: 20px;
       transition: background 0.3s, color 0.3s;
     }
-    .days-green { color: green; font-weight: bold; }
-    .days-orange { color: orange; font-weight: bold; }
-    .days-red { color: red; font-weight: bold; }
+    .days-green {
+      color: green;
+      font-weight: bold;
+    }
+    .days-orange {
+      color: orange;
+      font-weight: bold;
+    }
+    .days-red {
+      color: red;
+      font-weight: bold;
+    }
     /* Tmavý režim */
     body.dark-mode {
-      background: #333; color: #eee;
+      background: #333;
+      color: #eee;
     }
     body.dark-mode .card,
     body.dark-mode .list-group-item,
     body.dark-mode input,
     body.dark-mode textarea,
     body.dark-mode .modal-content {
-      background: #444; color: #eee; border-color: #555;
+      background: #444;
+      color: #eee;
+      border-color: #555;
     }
-    /* Styl pro FullCalendar uvnitř modálu */
-    #calendarView { max-height: 500px; }
   </style>
 </head>
 <body>
   <div class="container">
-    <!-- Hlavička s tlačítky -->
+    <!-- Hlavička a tlačítko pro tmavý režim -->
     <div class="d-flex justify-content-between align-items-center mb-3">
       <h1 class="mb-0">IP hlídač</h1>
-      <div>
-        <button class="btn btn-outline-secondary me-2" onclick="toggleDarkMode()">Tmavý režim</button>
-        <button class="btn btn-info me-2" data-bs-toggle="modal" data-bs-target="#graphicalCalendarModal">Grafický kalendář</button>
-      </div>
+      <button class="btn btn-outline-secondary" onclick="toggleDarkMode()">Tmavý režim</button>
     </div>
     <p id="todayDate" class="mb-4"></p>
     
@@ -59,10 +64,10 @@
       </div>
     </div>
     
-    <!-- Textový kalendář -->
+    <!-- Nová sekce Kalendář -->
     <div class="card mb-4">
       <div class="card-body">
-        <h5>Kalendář – textový seznam</h5>
+        <h5>Kalendář</h5>
         <div id="calendarList"></div>
         <form id="calendarForm" onsubmit="addCalendarEvent(event)">
           <div class="mb-3">
@@ -82,17 +87,20 @@
       </div>
     </div>
     
-    <!-- Export/Import a Nastavení -->
+    <!-- Export/Import, Nastavení a Grafický kalendář -->
     <div class="mb-4">
-      <button class="btn btn-primary" onclick="exportDataDownload()">Export dat</button>
+      <button class="btn btn-primary" onclick="downloadExportData()">Export dat</button>
       <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">Import dat</button>
       <button class="btn btn-secondary" onclick="showSettings()">Nastavení</button>
+      <button class="btn btn-info" onclick="showGraphicCalendar()">Grafický kalendář</button>
       <input type="file" id="importFile" style="display:none" onchange="importData(event)">
     </div>
     
     <!-- Formulář pro přidání nového klienta -->
     <div class="card mb-4">
-      <div class="card-header">Přidat nového klienta</div>
+      <div class="card-header">
+        Přidat nového klienta
+      </div>
       <div class="card-body">
         <form id="clientForm" onsubmit="addClient(event)">
           <div class="mb-3">
@@ -113,7 +121,7 @@
       <input type="text" id="searchInput" class="form-control" placeholder="Hledat klienta podle jména" onkeyup="filterClients()">
     </div>
     
-    <!-- Přepínač pro skrývání hotových položek -->
+    <!-- Globální přepínač pro skrytí hotových položek -->
     <div class="mb-3 form-check">
       <input type="checkbox" class="form-check-input" id="hideCompleted" onchange="renderClients()">
       <label class="form-check-label" for="hideCompleted">Skrýt hotové položky</label>
@@ -122,15 +130,13 @@
     <!-- Seznam klientů -->
     <div id="clientsList"></div>
     
-    <!-- Footer -->
+    <!-- Footer s informací o verzi -->
     <footer class="text-center mt-5">
       <small>Program vytvořil Přemysl Pozděna, verze 1.0.2.</small>
     </footer>
   </div>
   
-  <!-- =========================
-       MODÁLY
-  ============================== -->
+  <!-- Modály -->
   
   <!-- Nastavení modal -->
   <div class="modal" tabindex="-1" id="settingsModal">
@@ -159,22 +165,102 @@
               <input type="number" class="form-control" id="settingsContractThreshold" min="1" required>
             </div>
             <div class="mb-3">
-              <label for="settingsCalendarThreshold" class="form-label">Kalendář – zobrazit v úkolech do (dny):</label>
+              <label for="settingsCalendarThreshold" class="form-label">Prahová hodnota pro kalendář (dny):</label>
               <input type="number" class="form-control" id="settingsCalendarThreshold" min="1" required>
             </div>
             <hr>
-            <h6>Notifikace</h6>
-            <div class="mb-3 form-check">
-              <input type="checkbox" class="form-check-input" id="settingsEnableNotifications">
-              <label class="form-check-label" for="settingsEnableNotifications">Povolit notifikace</label>
+            <div class="form-check mb-3">
+              <input type="checkbox" class="form-check-input" id="settingsNotificationsEnabled">
+              <label class="form-check-label" for="settingsNotificationsEnabled">Povolit notifikace</label>
             </div>
             <div class="mb-3">
-              <label for="settingsNotificationInterval" class="form-label">Interval notifikací (minuty):</label>
-              <input type="number" class="form-control" id="settingsNotificationInterval" min="1" required>
+              <label for="settingsNotificationInterval" class="form-label">Interval notifikací (sekundy):</label>
+              <input type="number" class="form-control" id="settingsNotificationInterval" min="10" required>
+            </div>
+            <hr>
+            <h6>Grafický kalendář</h6>
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" id="settingsGCEvents">
+              <label class="form-check-label" for="settingsGCEvents">Zobrazit události</label>
+            </div>
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" id="settingsGCPlans">
+              <label class="form-check-label" for="settingsGCPlans">Zobrazit plány</label>
+            </div>
+            <div class="form-check mb-3">
+              <input type="checkbox" class="form-check-input" id="settingsGCContracts">
+              <label class="form-check-label" for="settingsGCContracts">Zobrazit smlouvy</label>
             </div>
             <button type="submit" class="btn btn-primary">Uložit nastavení</button>
             <button type="button" class="btn btn-danger" onclick="resetData()">Resetovat data</button>
             <button type="button" class="btn btn-warning" onclick="clearCompleted()">Vyčistit hotové položky</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Editace plánu modal -->
+  <div class="modal" tabindex="-1" id="editPlanModal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Upravit plán</h5>
+          <button type="button" class="btn-close" onclick="hideEditPlanModal()"></button>
+        </div>
+        <div class="modal-body">
+          <form id="editPlanForm" onsubmit="savePlanEdits(event)">
+            <div class="mb-3">
+              <label for="editPlanName" class="form-label">Název plánu:</label>
+              <input type="text" class="form-control" id="editPlanName" required>
+            </div>
+            <div class="mb-3">
+              <label for="editPlanNotes" class="form-label">Poznámky:</label>
+              <textarea class="form-control" id="editPlanNotes"></textarea>
+            </div>
+            <div class="mb-3">
+              <label for="editPlanExpiration" class="form-label">Platnost do:</label>
+              <input type="date" class="form-control" id="editPlanExpiration" required>
+            </div>
+            <div class="mb-3 form-check">
+              <input type="checkbox" class="form-check-input" id="editPlanCompleted">
+              <label class="form-check-label" for="editPlanCompleted">Hotový</label>
+            </div>
+            <input type="hidden" id="editPlanClientId">
+            <input type="hidden" id="editPlanId">
+            <button type="submit" class="btn btn-primary">Uložit změny</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Editace kroku modal -->
+  <div class="modal" tabindex="-1" id="editStepModal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Upravit krok</h5>
+          <button type="button" class="btn-close" onclick="hideEditStepModal()"></button>
+        </div>
+        <div class="modal-body">
+          <form id="editStepForm" onsubmit="saveStepEdits(event)">
+            <div class="mb-3">
+              <label for="editStepDescription" class="form-label">Popis kroku:</label>
+              <input type="text" class="form-control" id="editStepDescription" required>
+            </div>
+            <div class="mb-3">
+              <label for="editStepDate" class="form-label">Datum:</label>
+              <input type="date" class="form-control" id="editStepDate" required>
+            </div>
+            <div class="mb-3 form-check">
+              <input type="checkbox" class="form-check-input" id="editStepCompleted">
+              <label class="form-check-label" for="editStepCompleted">Hotový</label>
+            </div>
+            <input type="hidden" id="editStepClientId">
+            <input type="hidden" id="editStepPlanId">
+            <input type="hidden" id="editStepId">
+            <button type="submit" class="btn btn-primary">Uložit změny</button>
           </form>
         </div>
       </div>
@@ -186,7 +272,7 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Nastavit/Upravit smlouvu</h5>
+          <h5 class="modal-title">Upravit smlouvu</h5>
           <button type="button" class="btn-close" onclick="hideEditContractModal()"></button>
         </div>
         <div class="modal-body">
@@ -207,29 +293,29 @@
     </div>
   </div>
   
-  <!-- Editace kalendářové události modal -->
-  <div class="modal" tabindex="-1" id="editCalendarEventModal">
+  <!-- Editace kalendářní události modal -->
+  <div class="modal" tabindex="-1" id="editCalendarModal">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">Upravit událost</h5>
-          <button type="button" class="btn-close" onclick="hideEditCalendarEventModal()"></button>
+          <button type="button" class="btn-close" onclick="hideEditCalendarModal()"></button>
         </div>
         <div class="modal-body">
-          <form id="editCalendarEventForm" onsubmit="saveCalendarEventEdits(event)">
+          <form id="editCalendarForm" onsubmit="saveCalendarEventEdits(event)">
             <div class="mb-3">
-              <label for="editEventTitle" class="form-label">Název události:</label>
-              <input type="text" class="form-control" id="editEventTitle" required>
+              <label for="editCalendarTitle" class="form-label">Název události:</label>
+              <input type="text" class="form-control" id="editCalendarTitle" required>
             </div>
             <div class="mb-3">
-              <label for="editEventDate" class="form-label">Datum:</label>
-              <input type="date" class="form-control" id="editEventDate" required>
+              <label for="editCalendarDate" class="form-label">Datum:</label>
+              <input type="date" class="form-control" id="editCalendarDate" required>
             </div>
             <div class="mb-3">
-              <label for="editEventDetails" class="form-label">Detaily:</label>
-              <textarea class="form-control" id="editEventDetails"></textarea>
+              <label for="editCalendarDetails" class="form-label">Detail události:</label>
+              <textarea class="form-control" id="editCalendarDetails"></textarea>
             </div>
-            <input type="hidden" id="editEventId">
+            <input type="hidden" id="editCalendarEventId">
             <button type="submit" class="btn btn-primary">Uložit změny</button>
           </form>
         </div>
@@ -238,29 +324,52 @@
   </div>
   
   <!-- Grafický kalendář modal -->
-  <div class="modal fade" id="graphicalCalendarModal" tabindex="-1" aria-labelledby="graphicalCalendarModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
+  <div class="modal" tabindex="-1" id="graphicCalendarModal">
+    <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="graphicalCalendarModalLabel">Grafický kalendář</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button>
+          <h5 class="modal-title">Grafický kalendář</h5>
+          <button type="button" class="btn-close" onclick="hideGraphicCalendar()"></button>
         </div>
         <div class="modal-body">
-          <div id="calendarView"></div>
+          <div id="graphicCalendarContent"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="hideGraphicCalendar()">Zavřít</button>
         </div>
       </div>
     </div>
   </div>
   
-  <!-- (Další modály jako editPlanModal, editStepModal, updateModal – dle potřeby, zde nejsou opětovně zahrnuty) -->
+  <!-- Update modal (notifikace nové verze) -->
+  <div class="modal" tabindex="-1" id="updateModal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Aktualizace k dispozici</h5>
+          <button type="button" class="btn-close" onclick="hideUpdateModal()"></button>
+        </div>
+        <div class="modal-body">
+          <p>Nová verze: 1.0.2</p>
+          <p>Změny:</p>
+          <ul>
+            <li>Export dat se nyní stáhne jako soubor</li>
+            <li>Možnost odkrývání, skrývání a editace kalendářních událostí</li>
+            <li>Nová nastavení pro zobrazení kalendářních úkolů</li>
+            <li>Přidáno Notification API pro připomínání úkolů i offline</li>
+            <li>Grafický kalendář zobrazující události, plány a smlouvy</li>
+          </ul>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="hideUpdateModal()">Zrušit</button>
+          <button type="button" class="btn btn-primary" onclick="updateApp()">Aktualizovat</button>
+        </div>
+      </div>
+    </div>
+  </div>
   
-  <!-- =========================
-       SCRIPTS
-  ============================== -->
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <!-- FullCalendar JS -->
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.js"></script>
   
   <script>
     /* Datový model:
@@ -271,17 +380,26 @@
     */
     let clients = [];
     let calendarEvents = [];
+    // Rozšířená výchozí nastavení
     const defaultSettings = {
       evalThreshold: 7,
       planThreshold: 7,
       stepThreshold: 7,
       contractThreshold: 60,
       calendarThreshold: 3,
-      enableNotifications: false,
-      notificationInterval: 10
+      notificationsEnabled: false,
+      notificationInterval: 60, // v sekundách
+      graphicCalendar: {
+        showEvents: true,
+        showPlans: true,
+        showContracts: true
+      }
     };
     let settings = {};
     const appVersion = "1.0.2";
+    
+    // Pro notifikace – sledujeme již oznámené úkoly (aby nedocházelo k opakovanému upozorňování)
+    let notifiedTaskIds = new Set();
     
     document.addEventListener('DOMContentLoaded', () => {
       loadData();
@@ -295,9 +413,6 @@
       loadDarkMode();
       registerServiceWorker();
       initNotifications();
-      startNotificationInterval();
-      // Při otevření modálu s grafickým kalendářem inicializuj FullCalendar
-      document.getElementById('graphicalCalendarModal').addEventListener('shown.bs.modal', initGraphicalCalendar);
     });
     
     function updateToday() {
@@ -305,15 +420,15 @@
       document.getElementById('todayDate').textContent = 'Dnes je: ' + today.toLocaleDateString();
     }
     
-    // Export dat jako soubor
-    function exportDataDownload() {
+    // Export dat – stáhne se soubor JSON
+    function downloadExportData() {
       const data = { clients, calendarEvents, settings };
       const dataStr = JSON.stringify(data, null, 2);
-      const blob = new Blob([dataStr], { type: "application/json" });
+      const blob = new Blob([dataStr], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
+      const a = document.createElement('a');
       a.href = url;
-      a.download = "ipHlidac_export.json";
+      a.download = 'ipHlidac-export.json';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -335,11 +450,10 @@
             }
             if (importedData.calendarEvents && Array.isArray(importedData.calendarEvents)) {
               calendarEvents = importedData.calendarEvents;
-              calendarEvents.forEach(ev => {
-                if (typeof ev.detailsVisible === 'undefined') ev.detailsVisible = false;
-              });
             }
-            if (importedData.settings) { settings = importedData.settings; }
+            if (importedData.settings) {
+              settings = importedData.settings;
+            }
             saveData();
             saveCalendarEvents();
             renderClients();
@@ -347,7 +461,9 @@
             renderTasks();
             renderCalendar();
             alert('Data byla úspěšně importována.');
-          } catch (error) { alert('Chyba při importu dat.'); }
+          } catch (error) {
+            alert('Chyba při importu dat.');
+          }
         };
         reader.readAsText(file);
       }
@@ -357,7 +473,11 @@
       const data = localStorage.getItem('ipHlidacData');
       if (data) {
         clients = JSON.parse(data);
-        clients.forEach(client => { if (typeof client.detailsVisible === 'undefined') client.detailsVisible = false; });
+        clients.forEach(client => {
+          if (typeof client.detailsVisible === 'undefined') {
+            client.detailsVisible = false;
+          }
+        });
       }
     }
     
@@ -369,7 +489,6 @@
       const data = localStorage.getItem('ipHlidacCalendar');
       if (data) {
         calendarEvents = JSON.parse(data);
-        calendarEvents.forEach(ev => { if (typeof ev.detailsVisible === 'undefined') ev.detailsVisible = false; });
       }
     }
     
@@ -379,8 +498,11 @@
     
     function loadSettings() {
       const data = localStorage.getItem('ipHlidacSettings');
-      if (data) { settings = JSON.parse(data); }
-      else { settings = { ...defaultSettings }; }
+      if (data) {
+        settings = JSON.parse(data);
+      } else {
+        settings = { ...defaultSettings };
+      }
     }
     
     function saveSettings() {
@@ -388,12 +510,17 @@
     }
     
     function renderSummary() {
-      let total = clients.length, overdueEval = 0, expiringPlans = 0, expiringContracts = 0;
+      let total = clients.length;
+      let overdueEval = 0;
+      let expiringPlans = 0;
+      let expiringContracts = 0;
       clients.forEach(client => {
         if (client.lastEvaluation) {
           const evalInfo = calculateEvalDays(client.lastEvaluation);
           if (evalInfo.daysLeft < 0) overdueEval++;
-        } else { overdueEval++; }
+        } else {
+          overdueEval++;
+        }
         client.plans.forEach(plan => {
           const daysLeft = calculateDaysLeft(plan.expirationDate);
           if (daysLeft <= settings.planThreshold) expiringPlans++;
@@ -407,25 +534,28 @@
         `Celkem klientů: ${total} | Hodnocení k aktualizaci: ${overdueEval} | Plány k aktualizaci: ${expiringPlans} | Smlouvy k obnovení: ${expiringContracts}`;
     }
     
+    // Upravená verze renderTasks s barevným označením dnů
     function renderTasks() {
       let tasks = [];
       clients.forEach(client => {
         if (client.lastEvaluation) {
           const evalInfo = calculateEvalDays(client.lastEvaluation);
           if (evalInfo.daysLeft <= settings.evalThreshold) {
-            tasks.push(`Hodnocení u ${client.name} končí za <span class="${getDaysClass(evalInfo.daysLeft)}">${evalInfo.daysLeft} dní</span> (${evalInfo.daysLeft < 0 ? "POZDE" : "blízko"})`);
+            tasks.push(`Hodnocení u klienta ${client.name} končí za <span class="${getDaysClass(evalInfo.daysLeft)}">${evalInfo.daysLeft} dní</span> (${evalInfo.daysLeft < 0 ? "POZDE" : "blízko"})`);
           }
-        } else { tasks.push(`U ${client.name} chybí půlroční hodnocení`); }
+        } else {
+          tasks.push(`U klienta ${client.name} chybí půlroční hodnocení`);
+        }
         client.plans.forEach(plan => {
           const daysLeft = calculateDaysLeft(plan.expirationDate);
           if (!plan.completed && daysLeft <= settings.planThreshold) {
-            tasks.push(`Plán "${plan.name}" u ${client.name} končí za <span class="${getDaysClass(daysLeft)}">${daysLeft} dní</span> (${daysLeft < 0 ? "POZDE" : "brzy"})`);
+            tasks.push(`Plán "${plan.name}" u klienta ${client.name} končí za <span class="${getDaysClass(daysLeft)}">${daysLeft} dní</span> (${daysLeft < 0 ? "POZDE" : "brzy"})`);
           }
           plan.steps.forEach(step => {
             if (!step.completed) {
               const daysLeftStep = calculateDaysLeft(step.date);
               if (daysLeftStep <= settings.stepThreshold) {
-                tasks.push(`Krok "${step.description}" u plánu "${plan.name}" (${client.name}) končí za <span class="${getDaysClass(daysLeftStep)}">${daysLeftStep} dní</span> (${daysLeftStep < 0 ? "POZDE" : "blízko"})`);
+                tasks.push(`Krok "${step.description}" u plánu "${plan.name}" (klient ${client.name}) končí za <span class="${getDaysClass(daysLeftStep)}">${daysLeftStep} dní</span> (${daysLeftStep < 0 ? "POZDE" : "blízko"})`);
               }
             }
           });
@@ -433,9 +563,11 @@
         if (client.contractExpiration) {
           const contractDaysLeft = calculateDaysLeft(client.contractExpiration);
           if (contractDaysLeft <= settings.contractThreshold) {
-            tasks.push(`Smlouva u ${client.name} končí za <span class="${getDaysClass(contractDaysLeft)}">${contractDaysLeft} dní</span> (${contractDaysLeft < 0 ? "VYPRŠELA" : "brzy"})`);
+            tasks.push(`Smlouva u klienta ${client.name} končí za <span class="${getDaysClass(contractDaysLeft)}">${contractDaysLeft} dní</span> (${contractDaysLeft < 0 ? "VYPRŠELA" : "brzy"})`);
           }
-        } else { tasks.push(`U ${client.name} není nastavena smlouva`); }
+        } else {
+          tasks.push(`U klienta ${client.name} není nastavena smlouva`);
+        }
       });
       calendarEvents.forEach(event => {
         const daysLeft = calculateDaysLeft(event.date);
@@ -443,7 +575,16 @@
           tasks.push(`Událost "${event.title}" končí za <span class="${getDaysClass(daysLeft)}">${daysLeft} dní</span> (${daysLeft < 0 ? "POZDE" : "blízko"})`);
         }
       });
-      let tasksHTML = tasks.length === 0 ? "<p>Žádné úkoly k vyřízení.</p>" : "<ul class='list-group'>" + tasks.map(task => `<li class="list-group-item">${task}</li>`).join("") + "</ul>";
+      let tasksHTML = "";
+      if (tasks.length === 0) {
+        tasksHTML = "<p>Žádné úkoly k vyřízení.</p>";
+      } else {
+        tasksHTML = "<ul class='list-group'>";
+        tasks.forEach(task => {
+          tasksHTML += `<li class="list-group-item">${task}</li>`;
+        });
+        tasksHTML += "</ul>";
+      }
       document.getElementById('tasksList').innerHTML = tasksHTML;
     }
     
@@ -454,17 +595,20 @@
       } else {
         html = "<ul class='list-group'>";
         calendarEvents.forEach(event => {
-          html += `<li class="list-group-item d-flex flex-column">
+          html += `<li class="list-group-item">
                      <div class="d-flex justify-content-between align-items-center">
-                       <span>${event.title} - ${new Date(event.date).toLocaleDateString()}</span>
                        <div>
-                         ${event.details ? `<button class="btn btn-sm btn-info me-1" onclick="toggleCalendarDetails('${event.id}')">
+                         ${event.title} - ${new Date(event.date).toLocaleDateString()}
+                         ${event.detailsVisible ? `<br><small>${event.details || ''}</small>` : ''}
+                       </div>
+                       <div>
+                         <button class="btn btn-sm btn-info" onclick="toggleCalendarEventDetails('${event.id}')">
                            ${event.detailsVisible ? 'Skrýt detaily' : 'Zobrazit detaily'}
-                         </button>` : ""}
+                         </button>
+                         <button class="btn btn-sm btn-secondary" onclick="editCalendarEvent('${event.id}')">Upravit</button>
                          <button class="btn btn-sm btn-danger" onclick="deleteCalendarEvent('${event.id}')">X</button>
                        </div>
                      </div>
-                     ${event.detailsVisible && event.details ? `<div class="mt-2">${event.details}</div>` : ""}
                    </li>`;
         });
         html += "</ul>";
@@ -478,7 +622,13 @@
       const date = document.getElementById('eventDate').value;
       const details = document.getElementById('eventDetails').value.trim();
       if (title && date) {
-        const newEvent = { id: generateId(), title, date, details, detailsVisible: false };
+        const newEvent = {
+          id: generateId(),
+          title: title,
+          date: date,
+          details: details,
+          detailsVisible: false
+        };
         calendarEvents.push(newEvent);
         saveCalendarEvents();
         renderCalendar();
@@ -494,22 +644,73 @@
       renderTasks();
     }
     
-    function toggleCalendarDetails(eventId) {
-      const event = calendarEvents.find(ev => ev.id === eventId);
-      if (event) { event.detailsVisible = !event.detailsVisible; saveCalendarEvents(); renderCalendar(); }
+    // Toggling detailů u kalendářní události
+    function toggleCalendarEventDetails(eventId) {
+      const ev = calendarEvents.find(e => e.id === eventId);
+      if (ev) {
+        ev.detailsVisible = !ev.detailsVisible;
+        saveCalendarEvents();
+        renderCalendar();
+      }
+    }
+    
+    // Editace kalendářní události
+    function editCalendarEvent(eventId) {
+      const ev = calendarEvents.find(e => e.id === eventId);
+      if (ev) {
+        document.getElementById('editCalendarTitle').value = ev.title;
+        document.getElementById('editCalendarDate').value = ev.date;
+        document.getElementById('editCalendarDetails').value = ev.details;
+        document.getElementById('editCalendarEventId').value = ev.id;
+        const modal = new bootstrap.Modal(document.getElementById('editCalendarModal'));
+        modal.show();
+      }
+    }
+    
+    function saveCalendarEventEdits(event) {
+      event.preventDefault();
+      const eventId = document.getElementById('editCalendarEventId').value;
+      const title = document.getElementById('editCalendarTitle').value.trim();
+      const date = document.getElementById('editCalendarDate').value;
+      const details = document.getElementById('editCalendarDetails').value.trim();
+      const ev = calendarEvents.find(e => e.id === eventId);
+      if (ev) {
+        ev.title = title;
+        ev.date = date;
+        ev.details = details;
+        saveCalendarEvents();
+        renderCalendar();
+        renderTasks();
+      }
+      hideEditCalendarModal();
+    }
+    
+    function hideEditCalendarModal() {
+      const modalEl = document.getElementById('editCalendarModal');
+      const modal = bootstrap.Modal.getInstance(modalEl);
+      modal.hide();
     }
     
     function generateId() {
       return '_' + Math.random().toString(36).substr(2, 9);
     }
     
-    // Přidání, úprava klienta, plánů, kroků apod.
+    // Přidání nového klienta
     function addClient(event) {
       event.preventDefault();
       const name = document.getElementById('clientName').value.trim();
       const birthdate = document.getElementById('clientBirthdate').value;
       if (name && birthdate) {
-        const newClient = { id: generateId(), name, birthdate, lastEvaluation: null, contractStart: null, contractExpiration: null, detailsVisible: false, plans: [] };
+        const newClient = {
+          id: generateId(),
+          name: name,
+          birthdate: birthdate,
+          lastEvaluation: null,
+          contractStart: null,
+          contractExpiration: null,
+          detailsVisible: false,
+          plans: []
+        };
         clients.push(newClient);
         saveData();
         renderClients();
@@ -552,7 +753,14 @@
       if (planName && planExpiration) {
         const client = clients.find(c => c.id === clientId);
         if (client) {
-          const newPlan = { id: generateId(), name: planName, notes: planNotes, expirationDate: planExpiration, completed: false, steps: [] };
+          const newPlan = {
+            id: generateId(),
+            name: planName,
+            notes: planNotes,
+            expirationDate: planExpiration,
+            completed: false,
+            steps: []
+          };
           client.plans.push(newPlan);
           saveData();
           renderClients();
@@ -584,7 +792,12 @@
         if (client) {
           const plan = client.plans.find(p => p.id === planId);
           if (plan) {
-            const newStep = { id: generateId(), description: stepDesc, date: stepDate, completed: false };
+            const newStep = {
+              id: generateId(),
+              description: stepDesc,
+              date: stepDate,
+              completed: false
+            };
             plan.steps.push(newStep);
             saveData();
             renderClients();
@@ -650,7 +863,9 @@
       }
     }
     
-    function filterClients() { renderClients(); }
+    function filterClients() {
+      renderClients();
+    }
     
     function renderClients() {
       const container = document.getElementById('clientsList');
@@ -700,7 +915,7 @@
                          <button class="btn btn-sm btn-primary" onclick="editContract('${client.id}')">Upravit smlouvu</button>`;
         } else {
           clientHTML += `<p>Smlouva není nastavena.</p>
-                         <button class="btn btn-sm btn-primary" onclick="editContract('${client.id}')">Nastavit smlouvu</button>`;
+                         <button class="btn btn-sm btn-primary" onclick="editContract('${client.id}')">Přidat smlouvu</button>`;
         }
         clientHTML += `</div>
               <div class="mb-3">
@@ -787,7 +1002,209 @@
       });
     }
     
-    // ---------------------------
+    // Modal pro editaci plánu, kroku a smlouvy – funkce zůstávají původní
+    function editPlan(clientId, planId) {
+      const client = clients.find(c => c.id === clientId);
+      if (client) {
+        const plan = client.plans.find(p => p.id === planId);
+        if (plan) {
+          document.getElementById('editPlanName').value = plan.name;
+          document.getElementById('editPlanNotes').value = plan.notes;
+          document.getElementById('editPlanExpiration').value = plan.expirationDate;
+          document.getElementById('editPlanCompleted').checked = plan.completed;
+          document.getElementById('editPlanClientId').value = clientId;
+          document.getElementById('editPlanId').value = planId;
+          const modal = new bootstrap.Modal(document.getElementById('editPlanModal'));
+          modal.show();
+        }
+      }
+    }
+    
+    function savePlanEdits(event) {
+      event.preventDefault();
+      const clientId = document.getElementById('editPlanClientId').value;
+      const planId = document.getElementById('editPlanId').value;
+      const name = document.getElementById('editPlanName').value.trim();
+      const notes = document.getElementById('editPlanNotes').value.trim();
+      const expiration = document.getElementById('editPlanExpiration').value;
+      const completed = document.getElementById('editPlanCompleted').checked;
+      const client = clients.find(c => c.id === clientId);
+      if (client) {
+        const plan = client.plans.find(p => p.id === planId);
+        if (plan) {
+          plan.name = name;
+          plan.notes = notes;
+          plan.expirationDate = expiration;
+          plan.completed = completed;
+          saveData();
+          renderClients();
+          renderSummary();
+          renderTasks();
+        }
+      }
+      hideEditPlanModal();
+    }
+    
+    function hideEditPlanModal() {
+      const modalEl = document.getElementById('editPlanModal');
+      const modal = bootstrap.Modal.getInstance(modalEl);
+      modal.hide();
+    }
+    
+    function editStep(clientId, planId, stepId) {
+      const client = clients.find(c => c.id === clientId);
+      if (client) {
+        const plan = client.plans.find(p => p.id === planId);
+        if (plan) {
+          const step = plan.steps.find(s => s.id === stepId);
+          if (step) {
+            document.getElementById('editStepDescription').value = step.description;
+            document.getElementById('editStepDate').value = step.date;
+            document.getElementById('editStepCompleted').checked = step.completed;
+            document.getElementById('editStepClientId').value = clientId;
+            document.getElementById('editStepPlanId').value = planId;
+            document.getElementById('editStepId').value = stepId;
+            const modal = new bootstrap.Modal(document.getElementById('editStepModal'));
+            modal.show();
+          }
+        }
+      }
+    }
+    
+    function saveStepEdits(event) {
+      event.preventDefault();
+      const clientId = document.getElementById('editStepClientId').value;
+      const planId = document.getElementById('editStepPlanId').value;
+      const stepId = document.getElementById('editStepId').value;
+      const description = document.getElementById('editStepDescription').value.trim();
+      const date = document.getElementById('editStepDate').value;
+      const completed = document.getElementById('editStepCompleted').checked;
+      const client = clients.find(c => c.id === clientId);
+      if (client) {
+        const plan = client.plans.find(p => p.id === planId);
+        if (plan) {
+          const step = plan.steps.find(s => s.id === stepId);
+          if (step) {
+            step.description = description;
+            step.date = date;
+            step.completed = completed;
+            saveData();
+            renderClients();
+            renderSummary();
+            renderTasks();
+          }
+        }
+      }
+      hideEditStepModal();
+    }
+    
+    function hideEditStepModal() {
+      const modalEl = document.getElementById('editStepModal');
+      const modal = bootstrap.Modal.getInstance(modalEl);
+      modal.hide();
+    }
+    
+    function editContract(clientId) {
+      const client = clients.find(c => c.id === clientId);
+      if (client) {
+        document.getElementById('editContractClientId').value = clientId;
+        document.getElementById('editContractStart').value = client.contractStart || "";
+        document.getElementById('editContractExpiration').value = client.contractExpiration || "";
+        const modal = new bootstrap.Modal(document.getElementById('editContractModal'));
+        modal.show();
+      }
+    }
+    
+    function saveContractEdits(event) {
+      event.preventDefault();
+      const clientId = document.getElementById('editContractClientId').value;
+      const start = document.getElementById('editContractStart').value;
+      const expiration = document.getElementById('editContractExpiration').value;
+      const client = clients.find(c => c.id === clientId);
+      if (client) {
+        client.contractStart = start;
+        client.contractExpiration = expiration;
+        saveData();
+        renderClients();
+        renderSummary();
+        renderTasks();
+      }
+      hideEditContractModal();
+    }
+    
+    function hideEditContractModal() {
+      const modalEl = document.getElementById('editContractModal');
+      const modal = bootstrap.Modal.getInstance(modalEl);
+      modal.hide();
+    }
+    
+    // Nastavení modální okno
+    function showSettings() {
+      document.getElementById('settingsEvalThreshold').value = settings.evalThreshold;
+      document.getElementById('settingsPlanThreshold').value = settings.planThreshold;
+      document.getElementById('settingsStepThreshold').value = settings.stepThreshold;
+      document.getElementById('settingsContractThreshold').value = settings.contractThreshold;
+      document.getElementById('settingsCalendarThreshold').value = settings.calendarThreshold;
+      document.getElementById('settingsNotificationsEnabled').checked = settings.notificationsEnabled;
+      document.getElementById('settingsNotificationInterval').value = settings.notificationInterval;
+      document.getElementById('settingsGCEvents').checked = settings.graphicCalendar.showEvents;
+      document.getElementById('settingsGCPlans').checked = settings.graphicCalendar.showPlans;
+      document.getElementById('settingsGCContracts').checked = settings.graphicCalendar.showContracts;
+      const modal = new bootstrap.Modal(document.getElementById('settingsModal'));
+      modal.show();
+    }
+    
+    function hideSettings() {
+      const modalEl = document.getElementById('settingsModal');
+      const modal = bootstrap.Modal.getInstance(modalEl);
+      modal.hide();
+    }
+    
+    function saveSettingsForm(event) {
+      event.preventDefault();
+      settings.evalThreshold = parseInt(document.getElementById('settingsEvalThreshold').value, 10);
+      settings.planThreshold = parseInt(document.getElementById('settingsPlanThreshold').value, 10);
+      settings.stepThreshold = parseInt(document.getElementById('settingsStepThreshold').value, 10);
+      settings.contractThreshold = parseInt(document.getElementById('settingsContractThreshold').value, 10);
+      settings.calendarThreshold = parseInt(document.getElementById('settingsCalendarThreshold').value, 10);
+      settings.notificationsEnabled = document.getElementById('settingsNotificationsEnabled').checked;
+      settings.notificationInterval = parseInt(document.getElementById('settingsNotificationInterval').value, 10);
+      settings.graphicCalendar.showEvents = document.getElementById('settingsGCEvents').checked;
+      settings.graphicCalendar.showPlans = document.getElementById('settingsGCPlans').checked;
+      settings.graphicCalendar.showContracts = document.getElementById('settingsGCContracts').checked;
+      saveSettings();
+      hideSettings();
+      renderSummary();
+      renderTasks();
+      // Restart notifikačního intervalu
+      initNotifications();
+    }
+    
+    function clearCompleted() {
+      if (confirm("Opravdu chceš odstranit všechny hotové položky? Tato akce je nevratná.")) {
+        clients.forEach(client => {
+          client.plans = client.plans.filter(plan => {
+            if (plan.completed) return false;
+            plan.steps = plan.steps.filter(step => !step.completed);
+            return true;
+          });
+        });
+        saveData();
+        renderClients();
+        renderSummary();
+        renderTasks();
+      }
+    }
+    
+    function resetData() {
+      if (confirm("Opravdu chceš smazat VŠECHNA data? Tato akce je nevratná.")) {
+        localStorage.removeItem('ipHlidacData');
+        localStorage.removeItem('ipHlidacSettings');
+        localStorage.removeItem('ipHlidacCalendar');
+        location.reload();
+      }
+    }
+    
     // Tmavý režim
     function toggleDarkMode() {
       document.body.classList.toggle('dark-mode');
@@ -796,22 +1213,27 @@
     
     function loadDarkMode() {
       const darkMode = localStorage.getItem('darkMode');
-      if (darkMode === 'true') { document.body.classList.add('dark-mode'); }
+      if (darkMode === 'true') {
+        document.body.classList.add('dark-mode');
+      }
     }
     
-    // ---------------------------
     // Pomocné funkce pro výpočet dnů
     function calculateDaysLeft(expirationDate) {
       const today = new Date();
       const expDate = new Date(expirationDate);
-      return Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
+      const diffTime = expDate - today;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return diffDays;
     }
     
     function calculateEvalDays(lastEval) {
       const evalDate = new Date(lastEval);
       evalDate.setMonth(evalDate.getMonth() + 6);
       const today = new Date();
-      return { nextEvaluation: evalDate, daysLeft: Math.ceil((evalDate - today) / (1000 * 60 * 60 * 24)) };
+      const diffTime = evalDate - today;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return { nextEvaluation: evalDate, daysLeft: diffDays };
     }
     
     function getDaysClass(days) {
@@ -820,8 +1242,160 @@
       return 'days-red';
     }
     
-    // ---------------------------
-    // Service Worker registrace
+    // Grafický kalendář – shromáždí události, plány a smlouvy a seřadí je dle data
+    function renderGraphicCalendar() {
+      let entries = [];
+      // Události
+      if (settings.graphicCalendar.showEvents) {
+        calendarEvents.forEach(ev => {
+          entries.push({
+            date: new Date(ev.date),
+            type: 'Událost',
+            title: ev.title,
+            details: ev.details,
+            edit: () => { editCalendarEvent(ev.id); }
+          });
+        });
+      }
+      // Plány a jejich datum expirace
+      if (settings.graphicCalendar.showPlans) {
+        clients.forEach(client => {
+          client.plans.forEach(plan => {
+            entries.push({
+              date: new Date(plan.expirationDate),
+              type: 'Plán',
+              title: plan.name + ' (klient ' + client.name + ')',
+              details: plan.notes,
+              edit: () => { editPlan(client.id, plan.id); }
+            });
+          });
+        });
+      }
+      // Smlouvy – datum expirace
+      if (settings.graphicCalendar.showContracts) {
+        clients.forEach(client => {
+          if (client.contractExpiration) {
+            entries.push({
+              date: new Date(client.contractExpiration),
+              type: 'Smlouva',
+              title: 'Smlouva ' + client.name,
+              details: '',
+              edit: () => { editContract(client.id); }
+            });
+          }
+        });
+      }
+      // Seřadíme podle data
+      entries.sort((a, b) => a.date - b.date);
+      
+      let html = `<table class="table table-striped">
+                    <thead>
+                      <tr>
+                        <th>Datum</th>
+                        <th>Typ</th>
+                        <th>Název</th>
+                        <th>Akce</th>
+                      </tr>
+                    </thead>
+                    <tbody>`;
+      entries.forEach(entry => {
+        html += `<tr>
+                  <td>${entry.date.toLocaleDateString()}</td>
+                  <td>${entry.type}</td>
+                  <td>${entry.title}</td>
+                  <td><button class="btn btn-sm btn-secondary" onclick="(${entry.edit.toString()})();">Upravit</button></td>
+                 </tr>`;
+      });
+      html += `</tbody></table>`;
+      document.getElementById('graphicCalendarContent').innerHTML = html;
+    }
+    
+    function showGraphicCalendar() {
+      renderGraphicCalendar();
+      const modal = new bootstrap.Modal(document.getElementById('graphicCalendarModal'));
+      modal.show();
+    }
+    
+    function hideGraphicCalendar() {
+      const modalEl = document.getElementById('graphicCalendarModal');
+      const modal = bootstrap.Modal.getInstance(modalEl);
+      modal.hide();
+    }
+    
+    // Notification API – inicializace a kontrola úkolů k vyřízení
+    function initNotifications() {
+      if (settings.notificationsEnabled) {
+        if (Notification.permission !== "granted") {
+          Notification.requestPermission().then(permission => {
+            if (permission === "granted") {
+              startNotificationInterval();
+            }
+          });
+        } else {
+          startNotificationInterval();
+        }
+      }
+    }
+    
+    let notificationIntervalId;
+    function startNotificationInterval() {
+      if (notificationIntervalId) clearInterval(notificationIntervalId);
+      notificationIntervalId = setInterval(checkDueTasksForNotifications, settings.notificationInterval * 1000);
+    }
+    
+    function getDueTasks() {
+      let dueTasks = [];
+      clients.forEach(client => {
+        if (client.lastEvaluation) {
+          const evalInfo = calculateEvalDays(client.lastEvaluation);
+          if (evalInfo.daysLeft <= settings.evalThreshold) {
+            dueTasks.push({ id: "eval-" + client.id, message: `Hodnocení u klienta ${client.name} končí za ${evalInfo.daysLeft} dní` });
+          }
+        } else {
+          dueTasks.push({ id: "eval-missing-" + client.id, message: `U klienta ${client.name} chybí půlroční hodnocení` });
+        }
+        client.plans.forEach(plan => {
+          const daysLeft = calculateDaysLeft(plan.expirationDate);
+          if (!plan.completed && daysLeft <= settings.planThreshold) {
+            dueTasks.push({ id: "plan-" + plan.id, message: `Plán "${plan.name}" u klienta ${client.name} končí za ${daysLeft} dní` });
+          }
+          plan.steps.forEach(step => {
+            if (!step.completed) {
+              const daysLeftStep = calculateDaysLeft(step.date);
+              if (daysLeftStep <= settings.stepThreshold) {
+                dueTasks.push({ id: "step-" + step.id, message: `Krok "${step.description}" u plánu "${plan.name}" (klient ${client.name}) končí za ${daysLeftStep} dní` });
+              }
+            }
+          });
+        });
+        if (client.contractExpiration) {
+          const contractDaysLeft = calculateDaysLeft(client.contractExpiration);
+          if (contractDaysLeft <= settings.contractThreshold) {
+            dueTasks.push({ id: "contract-" + client.id, message: `Smlouva u klienta ${client.name} končí za ${contractDaysLeft} dní` });
+          }
+        }
+      });
+      calendarEvents.forEach(ev => {
+        const daysLeft = calculateDaysLeft(ev.date);
+        if (daysLeft <= settings.calendarThreshold) {
+          dueTasks.push({ id: "cal-" + ev.id, message: `Událost "${ev.title}" končí za ${daysLeft} dní` });
+        }
+      });
+      return dueTasks;
+    }
+    
+    function checkDueTasksForNotifications() {
+      if (!settings.notificationsEnabled || Notification.permission !== "granted") return;
+      const tasks = getDueTasks();
+      tasks.forEach(task => {
+        if (!notifiedTaskIds.has(task.id)) {
+          new Notification("IP hlídač: Úkol k vyřízení", { body: task.message });
+          notifiedTaskIds.add(task.id);
+        }
+      });
+    }
+    
+    // Service Worker registrace s notifikací nové verze
     function registerServiceWorker() {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./service-worker.js')
@@ -840,237 +1414,31 @@
     }
     
     function showUpdateModal() {
-      // Pokud používáte update modal, zde jej můžete zobrazit
       const modal = new bootstrap.Modal(document.getElementById('updateModal'));
       modal.show();
     }
     
+    function hideUpdateModal() {
+      const modalEl = document.getElementById('updateModal');
+      const modal = bootstrap.Modal.getInstance(modalEl);
+      modal.hide();
+    }
+    
     function updateApp() {
       navigator.serviceWorker.getRegistration().then(reg => {
-        if (reg && reg.waiting) { reg.waiting.postMessage({ action: 'skipWaiting' }); }
+        if (reg && reg.waiting) {
+          reg.waiting.postMessage({ action: 'skipWaiting' });
+        }
         window.location.reload();
       });
     }
     
-    // ---------------------------
-    // Notification API
-    function initNotifications() {
-      if ("Notification" in window && Notification.permission === "default") {
-        Notification.requestPermission().then(permission => { if (permission === "granted") { console.log("Notifikace povoleny."); } });
-      }
+    // Zaregistruj Service Worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./service-worker.js')
+        .then(() => console.log('Service Worker registrován'))
+        .catch(err => console.error('Chyba při registraci Service Workeru:', err));
     }
-    
-    function showNotification(title, body) {
-      if (Notification.permission === "granted") {
-        new Notification(title, { body, icon: "icons/icon-192.png" });
-      }
-    }
-    
-    function getPendingTasks() {
-      let tasks = [];
-      clients.forEach(client => {
-        if (client.lastEvaluation) {
-          const evalInfo = calculateEvalDays(client.lastEvaluation);
-          if (evalInfo.daysLeft <= settings.evalThreshold) {
-            tasks.push(`Hodnocení u ${client.name} - zbývá ${evalInfo.daysLeft} dní`);
-          }
-        } else { tasks.push(`U ${client.name} chybí hodnocení`); }
-        client.plans.forEach(plan => {
-          const daysLeft = calculateDaysLeft(plan.expirationDate);
-          if (!plan.completed && daysLeft <= settings.planThreshold) {
-            tasks.push(`Plán "${plan.name}" u ${client.name} - zbývá ${daysLeft} dní`);
-          }
-          plan.steps.forEach(step => {
-            if (!step.completed) {
-              const daysLeftStep = calculateDaysLeft(step.date);
-              if (daysLeftStep <= settings.stepThreshold) {
-                tasks.push(`Krok "${step.description}" u plánu "${plan.name}" - zbývá ${daysLeftStep} dní`);
-              }
-            }
-          });
-        });
-        if (client.contractExpiration) {
-          const contractDaysLeft = calculateDaysLeft(client.contractExpiration);
-          if (contractDaysLeft <= settings.contractThreshold) {
-            tasks.push(`Smlouva u ${client.name} - zbývá ${contractDaysLeft} dní`);
-          }
-        } else { tasks.push(`U ${client.name} není smlouva nastavena`); }
-      });
-      calendarEvents.forEach(event => {
-        const daysLeft = calculateDaysLeft(event.date);
-        if (daysLeft <= settings.calendarThreshold) {
-          tasks.push(`Událost "${event.title}" - zbývá ${daysLeft} dní`);
-        }
-      });
-      return tasks;
-    }
-    
-    function checkAndNotify() {
-      if (!settings.enableNotifications) return;
-      const tasks = getPendingTasks();
-      if (tasks.length > 0) {
-        let notificationBody = tasks.slice(0, 5).join("\n");
-        if (tasks.length > 5) { notificationBody += "\n... a další úkoly"; }
-        showNotification("Máte úkoly k vyřízení", notificationBody);
-      }
-    }
-    
-    function startNotificationInterval() {
-      if (window.notificationIntervalId) clearInterval(window.notificationIntervalId);
-      if (settings.enableNotifications) {
-        window.notificationIntervalId = setInterval(checkAndNotify, settings.notificationInterval * 60000);
-      }
-    }
-    
-    // ---------------------------
-    // Grafický kalendář s FullCalendar
-    function getGraphicalCalendarEvents() {
-      let events = [];
-      // Události z klientů – hodnocení, plány, kroky, smlouvy
-      clients.forEach(client => {
-        if (client.lastEvaluation) {
-          const evalInfo = calculateEvalDays(client.lastEvaluation);
-          events.push({
-            id: generateId(),
-            title: `Hodnocení: ${client.name}`,
-            start: evalInfo.nextEvaluation.toISOString().split("T")[0],
-            allDay: true,
-            extendedProps: { type: 'evaluation', client: client.name }
-          });
-        }
-        client.plans.forEach(plan => {
-          events.push({
-            id: generateId(),
-            title: `Plán: ${plan.name} (${client.name})`,
-            start: plan.expirationDate,
-            allDay: true,
-            extendedProps: { type: 'plan', client: client.name }
-          });
-          plan.steps.forEach(step => {
-            if (!step.completed) {
-              events.push({
-                id: generateId(),
-                title: `Krok: ${step.description} (${client.name})`,
-                start: step.date,
-                allDay: true,
-                extendedProps: { type: 'step', client: client.name }
-              });
-            }
-          });
-        });
-        if (client.contractExpiration) {
-          events.push({
-            id: generateId(),
-            title: `Smlouva: ${client.name}`,
-            start: client.contractExpiration,
-            allDay: true,
-            extendedProps: { type: 'contract', client: client.name }
-          });
-        }
-      });
-      // Vlastní kalendářové události
-      calendarEvents.forEach(ev => {
-        events.push({
-          id: ev.id,
-          title: `Událost: ${ev.title}`,
-          start: ev.date,
-          allDay: true,
-          extendedProps: { type: 'calendar', details: ev.details }
-        });
-      });
-      return events;
-    }
-    
-    function initGraphicalCalendar() {
-      const calendarEl = document.getElementById('calendarView');
-      calendarEl.innerHTML = "";
-      const calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridWeek',
-        headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridWeek,dayGridMonth' },
-        events: getGraphicalCalendarEvents(),
-        eventClick: function(info) {
-          // Otevři modal pro editaci události
-          openEditCalendarEventModal(info.event);
-        }
-      });
-      calendar.render();
-    }
-    
-    // Editace kalendářové události
-    function openEditCalendarEventModal(event) {
-      document.getElementById('editEventId').value = event.id;
-      document.getElementById('editEventTitle').value = event.title;
-      document.getElementById('editEventDate').value = event.start.toISOString().split("T")[0];
-      document.getElementById('editEventDetails').value = event.extendedProps.details || "";
-      const modal = new bootstrap.Modal(document.getElementById('editCalendarEventModal'));
-      modal.show();
-    }
-    
-    function saveCalendarEventEdits(e) {
-      e.preventDefault();
-      const id = document.getElementById('editEventId').value;
-      const title = document.getElementById('editEventTitle').value.trim();
-      const date = document.getElementById('editEventDate').value;
-      const details = document.getElementById('editEventDetails').value.trim();
-      // Najdi událost v calendarEvents (pro vlastní kalendář) nebo aktualizuj podle potřeby
-      let event = calendarEvents.find(ev => ev.id === id);
-      if (event) {
-        event.title = title; event.date = date; event.details = details;
-        saveCalendarEvents();
-        renderCalendar();
-        renderTasks();
-      } else {
-        // Pokud událost pochází z generovaných dat (např. z klientů), není možno ji editovat – případně upozorni uživatele.
-        alert("Tuto událost nelze upravit, protože je generována z dat klienta.");
-      }
-      hideEditCalendarEventModal();
-      // Pro grafický kalendář obnov jej
-      initGraphicalCalendar();
-    }
-    
-    function hideEditCalendarEventModal() {
-      const modalEl = document.getElementById('editCalendarEventModal');
-      const modal = bootstrap.Modal.getInstance(modalEl);
-      modal.hide();
-    }
-    
-    // ---------------------------
-    // Editace smlouvy – otevření a uložení
-    function editContract(clientId) {
-      const client = clients.find(c => c.id === clientId);
-      if (client) {
-        document.getElementById('editContractClientId').value = clientId;
-        document.getElementById('editContractStart').value = client.contractStart || "";
-        document.getElementById('editContractExpiration').value = client.contractExpiration || "";
-        const modal = new bootstrap.Modal(document.getElementById('editContractModal'));
-        modal.show();
-      }
-    }
-    
-    function saveContractEdits(e) {
-      e.preventDefault();
-      const clientId = document.getElementById('editContractClientId').value;
-      const start = document.getElementById('editContractStart').value;
-      const expiration = document.getElementById('editContractExpiration').value;
-      const client = clients.find(c => c.id === clientId);
-      if (client) {
-        client.contractStart = start; client.contractExpiration = expiration;
-        saveData(); renderClients(); renderSummary(); renderTasks();
-      }
-      hideEditContractModal();
-    }
-    
-    function hideEditContractModal() {
-      const modalEl = document.getElementById('editContractModal');
-      const modal = bootstrap.Modal.getInstance(modalEl);
-      modal.hide();
-    }
-    
-    // ---------------------------
-    // Výpočet dnů, Service Worker, Notifikace – již popsané výše
-    // (funkce registerServiceWorker, initNotifications, startNotificationInterval, atd.)
-    
-    // (Předešlé funkce registerServiceWorker, initNotifications, atd. již jsou zahrnuty výše)
   </script>
 </body>
 </html>

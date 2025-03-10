@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ip-hlidac-cache-v1';
+const CACHE_NAME = 'ip-hlidac-cache-v2';
 const urlsToCache = [
   './',
   './index.html',

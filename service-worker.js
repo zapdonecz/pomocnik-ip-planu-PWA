@@ -18,6 +18,7 @@ self.addEventListener('install', event => {
   );
 });
 
+// Posluchač zpráv pro aktualizaci (skipWaiting)
 self.addEventListener('message', event => {
   if (event.data && event.data.action === 'skipWaiting') {
     self.skipWaiting();

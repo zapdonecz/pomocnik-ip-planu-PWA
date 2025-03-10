@@ -2,7 +2,7 @@ const CACHE_NAME = 'ip-hlidac-cache-v1.0.2';
 const urlsToCache = [
   './',
   './index.html',
-  './style.css',      // Uprav podle názvu tvého CSS souboru, pokud nějaký používáš
+  './style.css',      // Upravte podle názvu vašeho CSS souboru, pokud používáte
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png'

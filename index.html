@@ -89,7 +89,7 @@
     
     <!-- Export/Import, Nastavení a Grafický kalendář -->
     <div class="mb-4">
-      <button class="btn btn-primary" onclick="downloadExportData()">Export dat</button>
+      <button class="btn btn-primary" onclick="exportDataToFile()">Export dat</button>
       <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">Import dat</button>
       <button class="btn btn-secondary" onclick="showSettings()">Nastavení</button>
       <button class="btn btn-info" onclick="showGraphicCalendar()">Grafický kalendář</button>
@@ -137,7 +137,6 @@
   </div>
   
   <!-- Modály -->
-  
   <!-- Nastavení modal -->
   <div class="modal" tabindex="-1" id="settingsModal">
     <div class="modal-dialog">
@@ -168,28 +167,17 @@
               <label for="settingsCalendarThreshold" class="form-label">Prahová hodnota pro kalendář (dny):</label>
               <input type="number" class="form-control" id="settingsCalendarThreshold" min="1" required>
             </div>
-            <hr>
-            <div class="form-check mb-3">
+            <div class="mb-3 form-check">
               <input type="checkbox" class="form-check-input" id="settingsNotificationsEnabled">
-              <label class="form-check-label" for="settingsNotificationsEnabled">Povolit notifikace</label>
+              <label for="settingsNotificationsEnabled" class="form-label">Povolit notifikace</label>
             </div>
             <div class="mb-3">
-              <label for="settingsNotificationInterval" class="form-label">Interval notifikací (sekundy):</label>
-              <input type="number" class="form-control" id="settingsNotificationInterval" min="10" required>
+              <label for="settingsNotificationInterval" class="form-label">Interval notifikací (minuty):</label>
+              <input type="number" class="form-control" id="settingsNotificationInterval" min="1" value="5">
             </div>
-            <hr>
-            <h6>Grafický kalendář</h6>
-            <div class="form-check">
-              <input type="checkbox" class="form-check-input" id="settingsGCEvents">
-              <label class="form-check-label" for="settingsGCEvents">Zobrazit události</label>
-            </div>
-            <div class="form-check">
-              <input type="checkbox" class="form-check-input" id="settingsGCPlans">
-              <label class="form-check-label" for="settingsGCPlans">Zobrazit plány</label>
-            </div>
-            <div class="form-check mb-3">
-              <input type="checkbox" class="form-check-input" id="settingsGCContracts">
-              <label class="form-check-label" for="settingsGCContracts">Zobrazit smlouvy</label>
+            <div class="mb-3">
+              <label for="settingsGoogleCalendarURL" class="form-label">URL pro Grafický kalendář</label>
+              <input type="text" class="form-control" id="settingsGoogleCalendarURL" placeholder="https://calendar.google.com/..." value="">
             </div>
             <button type="submit" class="btn btn-primary">Uložit nastavení</button>
             <button type="button" class="btn btn-danger" onclick="resetData()">Resetovat data</button>
@@ -294,28 +282,28 @@
   </div>
   
   <!-- Editace kalendářní události modal -->
-  <div class="modal" tabindex="-1" id="editCalendarModal">
+  <div class="modal" tabindex="-1" id="editCalendarEventModal">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">Upravit událost</h5>
-          <button type="button" class="btn-close" onclick="hideEditCalendarModal()"></button>
+          <button type="button" class="btn-close" onclick="hideEditCalendarEventModal()"></button>
         </div>
         <div class="modal-body">
-          <form id="editCalendarForm" onsubmit="saveCalendarEventEdits(event)">
+          <form id="editCalendarEventForm" onsubmit="saveCalendarEventEdits(event)">
             <div class="mb-3">
-              <label for="editCalendarTitle" class="form-label">Název události:</label>
-              <input type="text" class="form-control" id="editCalendarTitle" required>
+              <label for="editEventTitle" class="form-label">Název události:</label>
+              <input type="text" class="form-control" id="editEventTitle" required>
             </div>
             <div class="mb-3">
-              <label for="editCalendarDate" class="form-label">Datum:</label>
-              <input type="date" class="form-control" id="editCalendarDate" required>
+              <label for="editEventDate" class="form-label">Datum:</label>
+              <input type="date" class="form-control" id="editEventDate" required>
             </div>
             <div class="mb-3">
-              <label for="editCalendarDetails" class="form-label">Detail události:</label>
-              <textarea class="form-control" id="editCalendarDetails"></textarea>
+              <label for="editEventDetails" class="form-label">Detail události:</label>
+              <textarea class="form-control" id="editEventDetails"></textarea>
             </div>
-            <input type="hidden" id="editCalendarEventId">
+            <input type="hidden" id="editEventId">
             <button type="submit" class="btn btn-primary">Uložit změny</button>
           </form>
         </div>
@@ -325,17 +313,14 @@
   
   <!-- Grafický kalendář modal -->
   <div class="modal" tabindex="-1" id="graphicCalendarModal">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-xl">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">Grafický kalendář</h5>
-          <button type="button" class="btn-close" onclick="hideGraphicCalendar()"></button>
+          <button type="button" class="btn-close" onclick="hideGraphicCalendarModal()"></button>
         </div>
         <div class="modal-body">
-          <div id="graphicCalendarContent"></div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" onclick="hideGraphicCalendar()">Zavřít</button>
+          <iframe id="googleCalendarFrame" src="" width="100%" height="600" frameborder="0" scrolling="no"></iframe>
         </div>
       </div>
     </div>
@@ -353,11 +338,12 @@
           <p>Nová verze: 1.0.2</p>
           <p>Změny:</p>
           <ul>
-            <li>Export dat se nyní stáhne jako soubor</li>
-            <li>Možnost odkrývání, skrývání a editace kalendářních událostí</li>
-            <li>Nová nastavení pro zobrazení kalendářních úkolů</li>
-            <li>Přidáno Notification API pro připomínání úkolů i offline</li>
-            <li>Grafický kalendář zobrazující události, plány a smlouvy</li>
+            <li>Export dat nyní stáhne soubor (JSON)</li>
+            <li>Kalendářní události lze nyní rozbalovat/skládat a editovat</li>
+            <li>Přidána možnost nastavit zobrazení kalendářních událostí v úkolech</li>
+            <li>Přidány notifikace (Notification API) s vlastním nastavením</li>
+            <li>Přidáno tlačítko Grafický kalendář s možností nastavení URL</li>
+            <li>Opraveno přidání a editace dat smlouvy</li>
           </ul>
         </div>
         <div class="modal-footer">
@@ -376,30 +362,21 @@
        Klient: { id, name, birthdate, lastEvaluation, contractStart, contractExpiration, detailsVisible, plans: [] }
        Plán: { id, name, notes, expirationDate, completed, steps: [] }
        Krok: { id, description, date, completed }
-       Událost: { id, title, date, details, detailsVisible }
+       Událost: { id, title, date, details }
     */
     let clients = [];
     let calendarEvents = [];
-    // Rozšířená výchozí nastavení
+    // Původní nastavení prahových hodnot
     const defaultSettings = {
       evalThreshold: 7,
       planThreshold: 7,
       stepThreshold: 7,
       contractThreshold: 60,
-      calendarThreshold: 3,
-      notificationsEnabled: false,
-      notificationInterval: 60, // v sekundách
-      graphicCalendar: {
-        showEvents: true,
-        showPlans: true,
-        showContracts: true
-      }
+      calendarThreshold: 3
     };
     let settings = {};
     const appVersion = "1.0.2";
-    
-    // Pro notifikace – sledujeme již oznámené úkoly (aby nedocházelo k opakovanému upozorňování)
-    let notifiedTaskIds = new Set();
+    let notificationIntervalId = null;
     
     document.addEventListener('DOMContentLoaded', () => {
       loadData();
@@ -412,7 +389,10 @@
       renderCalendar();
       loadDarkMode();
       registerServiceWorker();
-      initNotifications();
+      if (settings.notificationsEnabled) {
+        requestNotificationPermission();
+        scheduleNotifications();
+      }
     });
     
     function updateToday() {
@@ -420,15 +400,14 @@
       document.getElementById('todayDate').textContent = 'Dnes je: ' + today.toLocaleDateString();
     }
     
-    // Export dat – stáhne se soubor JSON
-    function downloadExportData() {
+    // Export dat jako stažitelný soubor
+    function exportDataToFile() {
       const data = { clients, calendarEvents, settings };
-      const dataStr = JSON.stringify(data, null, 2);
-      const blob = new Blob([dataStr], { type: 'application/json' });
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'ipHlidac-export.json';
+      a.download = "ipHlidac_data.json";
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -501,7 +480,7 @@
       if (data) {
         settings = JSON.parse(data);
       } else {
-        settings = { ...defaultSettings };
+        settings = { ...defaultSettings, notificationsEnabled: false, notificationInterval: 5, googleCalendarURL: "" };
       }
     }
     
@@ -598,16 +577,16 @@
           html += `<li class="list-group-item">
                      <div class="d-flex justify-content-between align-items-center">
                        <div>
-                         ${event.title} - ${new Date(event.date).toLocaleDateString()}
-                         ${event.detailsVisible ? `<br><small>${event.details || ''}</small>` : ''}
+                         <strong>${event.title}</strong> - ${new Date(event.date).toLocaleDateString()}
                        </div>
                        <div>
-                         <button class="btn btn-sm btn-info" onclick="toggleCalendarEventDetails('${event.id}')">
-                           ${event.detailsVisible ? 'Skrýt detaily' : 'Zobrazit detaily'}
-                         </button>
-                         <button class="btn btn-sm btn-secondary" onclick="editCalendarEvent('${event.id}')">Upravit</button>
+                         <button class="btn btn-sm btn-secondary" onclick="toggleEventDetails('${event.id}')">Detail</button>
+                         <button class="btn btn-sm btn-warning" onclick="editCalendarEvent('${event.id}')">Upravit</button>
                          <button class="btn btn-sm btn-danger" onclick="deleteCalendarEvent('${event.id}')">X</button>
                        </div>
+                     </div>
+                     <div id="eventDetails_${event.id}" class="collapse">
+                       <p>${event.details}</p>
                      </div>
                    </li>`;
         });
@@ -626,8 +605,7 @@
           id: generateId(),
           title: title,
           date: date,
-          details: details,
-          detailsVisible: false
+          details: details
         };
         calendarEvents.push(newEvent);
         saveCalendarEvents();
@@ -644,49 +622,47 @@
       renderTasks();
     }
     
-    // Toggling detailů u kalendářní události
-    function toggleCalendarEventDetails(eventId) {
-      const ev = calendarEvents.find(e => e.id === eventId);
-      if (ev) {
-        ev.detailsVisible = !ev.detailsVisible;
-        saveCalendarEvents();
-        renderCalendar();
+    function toggleEventDetails(eventId) {
+      const detailsEl = document.getElementById('eventDetails_' + eventId);
+      if (detailsEl.classList.contains('show')) {
+        detailsEl.classList.remove('show');
+      } else {
+        detailsEl.classList.add('show');
       }
     }
     
-    // Editace kalendářní události
     function editCalendarEvent(eventId) {
-      const ev = calendarEvents.find(e => e.id === eventId);
-      if (ev) {
-        document.getElementById('editCalendarTitle').value = ev.title;
-        document.getElementById('editCalendarDate').value = ev.date;
-        document.getElementById('editCalendarDetails').value = ev.details;
-        document.getElementById('editCalendarEventId').value = ev.id;
-        const modal = new bootstrap.Modal(document.getElementById('editCalendarModal'));
+      const eventObj = calendarEvents.find(ev => ev.id === eventId);
+      if (eventObj) {
+        document.getElementById('editEventTitle').value = eventObj.title;
+        document.getElementById('editEventDate').value = eventObj.date;
+        document.getElementById('editEventDetails').value = eventObj.details;
+        document.getElementById('editEventId').value = eventId;
+        const modal = new bootstrap.Modal(document.getElementById('editCalendarEventModal'));
         modal.show();
       }
     }
     
-    function saveCalendarEventEdits(event) {
-      event.preventDefault();
-      const eventId = document.getElementById('editCalendarEventId').value;
-      const title = document.getElementById('editCalendarTitle').value.trim();
-      const date = document.getElementById('editCalendarDate').value;
-      const details = document.getElementById('editCalendarDetails').value.trim();
-      const ev = calendarEvents.find(e => e.id === eventId);
-      if (ev) {
-        ev.title = title;
-        ev.date = date;
-        ev.details = details;
+    function saveCalendarEventEdits(e) {
+      e.preventDefault();
+      const eventId = document.getElementById('editEventId').value;
+      const title = document.getElementById('editEventTitle').value.trim();
+      const date = document.getElementById('editEventDate').value;
+      const details = document.getElementById('editEventDetails').value.trim();
+      const eventObj = calendarEvents.find(ev => ev.id === eventId);
+      if (eventObj) {
+        eventObj.title = title;
+        eventObj.date = date;
+        eventObj.details = details;
         saveCalendarEvents();
         renderCalendar();
         renderTasks();
       }
-      hideEditCalendarModal();
+      hideEditCalendarEventModal();
     }
     
-    function hideEditCalendarModal() {
-      const modalEl = document.getElementById('editCalendarModal');
+    function hideEditCalendarEventModal() {
+      const modalEl = document.getElementById('editCalendarEventModal');
       const modal = bootstrap.Modal.getInstance(modalEl);
       modal.hide();
     }
@@ -1002,7 +978,7 @@
       });
     }
     
-    // Modal pro editaci plánu, kroku a smlouvy – funkce zůstávají původní
+    // Modal pro editaci plánu, kroku, smlouvy a kalendářních událostí
     function editPlan(clientId, planId) {
       const client = clients.find(c => c.id === clientId);
       if (client) {
@@ -1138,7 +1114,6 @@
       modal.hide();
     }
     
-    // Nastavení modální okno
     function showSettings() {
       document.getElementById('settingsEvalThreshold').value = settings.evalThreshold;
       document.getElementById('settingsPlanThreshold').value = settings.planThreshold;
@@ -1147,9 +1122,7 @@
       document.getElementById('settingsCalendarThreshold').value = settings.calendarThreshold;
       document.getElementById('settingsNotificationsEnabled').checked = settings.notificationsEnabled;
       document.getElementById('settingsNotificationInterval').value = settings.notificationInterval;
-      document.getElementById('settingsGCEvents').checked = settings.graphicCalendar.showEvents;
-      document.getElementById('settingsGCPlans').checked = settings.graphicCalendar.showPlans;
-      document.getElementById('settingsGCContracts').checked = settings.graphicCalendar.showContracts;
+      document.getElementById('settingsGoogleCalendarURL').value = settings.googleCalendarURL;
       const modal = new bootstrap.Modal(document.getElementById('settingsModal'));
       modal.show();
     }
@@ -1169,15 +1142,18 @@
       settings.calendarThreshold = parseInt(document.getElementById('settingsCalendarThreshold').value, 10);
       settings.notificationsEnabled = document.getElementById('settingsNotificationsEnabled').checked;
       settings.notificationInterval = parseInt(document.getElementById('settingsNotificationInterval').value, 10);
-      settings.graphicCalendar.showEvents = document.getElementById('settingsGCEvents').checked;
-      settings.graphicCalendar.showPlans = document.getElementById('settingsGCPlans').checked;
-      settings.graphicCalendar.showContracts = document.getElementById('settingsGCContracts').checked;
+      settings.googleCalendarURL = document.getElementById('settingsGoogleCalendarURL').value.trim();
       saveSettings();
       hideSettings();
       renderSummary();
       renderTasks();
-      // Restart notifikačního intervalu
-      initNotifications();
+      if (notificationIntervalId) {
+        clearInterval(notificationIntervalId);
+      }
+      if (settings.notificationsEnabled) {
+        requestNotificationPermission();
+        scheduleNotifications();
+      }
     }
     
     function clearCompleted() {
@@ -1242,128 +1218,61 @@
       return 'days-red';
     }
     
-    // Grafický kalendář – shromáždí události, plány a smlouvy a seřadí je dle data
-    function renderGraphicCalendar() {
-      let entries = [];
-      // Události
-      if (settings.graphicCalendar.showEvents) {
-        calendarEvents.forEach(ev => {
-          entries.push({
-            date: new Date(ev.date),
-            type: 'Událost',
-            title: ev.title,
-            details: ev.details,
-            edit: () => { editCalendarEvent(ev.id); }
-          });
-        });
-      }
-      // Plány a jejich datum expirace
-      if (settings.graphicCalendar.showPlans) {
-        clients.forEach(client => {
-          client.plans.forEach(plan => {
-            entries.push({
-              date: new Date(plan.expirationDate),
-              type: 'Plán',
-              title: plan.name + ' (klient ' + client.name + ')',
-              details: plan.notes,
-              edit: () => { editPlan(client.id, plan.id); }
-            });
-          });
-        });
-      }
-      // Smlouvy – datum expirace
-      if (settings.graphicCalendar.showContracts) {
-        clients.forEach(client => {
-          if (client.contractExpiration) {
-            entries.push({
-              date: new Date(client.contractExpiration),
-              type: 'Smlouva',
-              title: 'Smlouva ' + client.name,
-              details: '',
-              edit: () => { editContract(client.id); }
-            });
-          }
-        });
-      }
-      // Seřadíme podle data
-      entries.sort((a, b) => a.date - b.date);
-      
-      let html = `<table class="table table-striped">
-                    <thead>
-                      <tr>
-                        <th>Datum</th>
-                        <th>Typ</th>
-                        <th>Název</th>
-                        <th>Akce</th>
-                      </tr>
-                    </thead>
-                    <tbody>`;
-      entries.forEach(entry => {
-        html += `<tr>
-                  <td>${entry.date.toLocaleDateString()}</td>
-                  <td>${entry.type}</td>
-                  <td>${entry.title}</td>
-                  <td><button class="btn btn-sm btn-secondary" onclick="(${entry.edit.toString()})();">Upravit</button></td>
-                 </tr>`;
-      });
-      html += `</tbody></table>`;
-      document.getElementById('graphicCalendarContent').innerHTML = html;
-    }
-    
+    // Grafický kalendář
     function showGraphicCalendar() {
-      renderGraphicCalendar();
-      const modal = new bootstrap.Modal(document.getElementById('graphicCalendarModal'));
-      modal.show();
+      if (settings.googleCalendarURL) {
+        document.getElementById('googleCalendarFrame').src = settings.googleCalendarURL;
+        const modal = new bootstrap.Modal(document.getElementById('graphicCalendarModal'));
+        modal.show();
+      } else {
+        alert("Není nastavena URL pro Grafický kalendář v nastaveních.");
+      }
     }
     
-    function hideGraphicCalendar() {
+    function hideGraphicCalendarModal() {
       const modalEl = document.getElementById('graphicCalendarModal');
       const modal = bootstrap.Modal.getInstance(modalEl);
       modal.hide();
     }
     
-    // Notification API – inicializace a kontrola úkolů k vyřízení
-    function initNotifications() {
-      if (settings.notificationsEnabled) {
-        if (Notification.permission !== "granted") {
-          Notification.requestPermission().then(permission => {
-            if (permission === "granted") {
-              startNotificationInterval();
-            }
-          });
-        } else {
-          startNotificationInterval();
-        }
+    // Notification API
+    function requestNotificationPermission() {
+      if (Notification.permission === 'default') {
+        Notification.requestPermission().then(permission => {
+          if (permission !== 'granted') {
+            alert("Notifikace nejsou povoleny.");
+          }
+        });
       }
     }
     
-    let notificationIntervalId;
-    function startNotificationInterval() {
-      if (notificationIntervalId) clearInterval(notificationIntervalId);
-      notificationIntervalId = setInterval(checkDueTasksForNotifications, settings.notificationInterval * 1000);
+    function scheduleNotifications() {
+      checkAndNotifyTasks();
+      notificationIntervalId = setInterval(checkAndNotifyTasks, settings.notificationInterval * 60000);
     }
     
-    function getDueTasks() {
-      let dueTasks = [];
+    function checkAndNotifyTasks() {
+      if (Notification.permission !== 'granted') return;
+      let notifications = [];
       clients.forEach(client => {
         if (client.lastEvaluation) {
           const evalInfo = calculateEvalDays(client.lastEvaluation);
           if (evalInfo.daysLeft <= settings.evalThreshold) {
-            dueTasks.push({ id: "eval-" + client.id, message: `Hodnocení u klienta ${client.name} končí za ${evalInfo.daysLeft} dní` });
+            notifications.push(`Hodnocení u ${client.name} za ${evalInfo.daysLeft} dní`);
           }
         } else {
-          dueTasks.push({ id: "eval-missing-" + client.id, message: `U klienta ${client.name} chybí půlroční hodnocení` });
+          notifications.push(`U ${client.name} chybí hodnocení`);
         }
         client.plans.forEach(plan => {
           const daysLeft = calculateDaysLeft(plan.expirationDate);
           if (!plan.completed && daysLeft <= settings.planThreshold) {
-            dueTasks.push({ id: "plan-" + plan.id, message: `Plán "${plan.name}" u klienta ${client.name} končí za ${daysLeft} dní` });
+            notifications.push(`Plán ${plan.name} u ${client.name} za ${daysLeft} dní`);
           }
           plan.steps.forEach(step => {
             if (!step.completed) {
               const daysLeftStep = calculateDaysLeft(step.date);
               if (daysLeftStep <= settings.stepThreshold) {
-                dueTasks.push({ id: "step-" + step.id, message: `Krok "${step.description}" u plánu "${plan.name}" (klient ${client.name}) končí za ${daysLeftStep} dní` });
+                notifications.push(`Krok ${step.description} u ${client.name} za ${daysLeftStep} dní`);
               }
             }
           });
@@ -1371,28 +1280,20 @@
         if (client.contractExpiration) {
           const contractDaysLeft = calculateDaysLeft(client.contractExpiration);
           if (contractDaysLeft <= settings.contractThreshold) {
-            dueTasks.push({ id: "contract-" + client.id, message: `Smlouva u klienta ${client.name} končí za ${contractDaysLeft} dní` });
+            notifications.push(`Smlouva u ${client.name} za ${contractDaysLeft} dní`);
           }
         }
       });
-      calendarEvents.forEach(ev => {
-        const daysLeft = calculateDaysLeft(ev.date);
+      calendarEvents.forEach(event => {
+        const daysLeft = calculateDaysLeft(event.date);
         if (daysLeft <= settings.calendarThreshold) {
-          dueTasks.push({ id: "cal-" + ev.id, message: `Událost "${ev.title}" končí za ${daysLeft} dní` });
+          notifications.push(`Událost ${event.title} za ${daysLeft} dní`);
         }
       });
-      return dueTasks;
-    }
-    
-    function checkDueTasksForNotifications() {
-      if (!settings.notificationsEnabled || Notification.permission !== "granted") return;
-      const tasks = getDueTasks();
-      tasks.forEach(task => {
-        if (!notifiedTaskIds.has(task.id)) {
-          new Notification("IP hlídač: Úkol k vyřízení", { body: task.message });
-          notifiedTaskIds.add(task.id);
-        }
-      });
+      if (notifications.length > 0) {
+        const message = notifications.join('\n');
+        new Notification('IP hlídač - Úkoly k vyřízení', { body: message });
+      }
     }
     
     // Service Worker registrace s notifikací nové verze

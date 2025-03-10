@@ -142,7 +142,7 @@
     
     <!-- Footer s informací o verzi -->
     <footer class="text-center mt-5">
-      <small>Program vytvořil Přemku, verze 1.0.2.</small>
+      <small>Program vytvořil Přemysl Pozděna, verze 1.0.2.</small>
     </footer>
   </div>
   
@@ -548,112 +548,26 @@
       document.getElementById('tasksList').innerHTML = tasksHTML;
     }
     
-    function renderGraphicalCalendar() {
-  const modalBody = document.getElementById('graphicalCalendarBody');
-  modalBody.innerHTML = "";
-  const navDiv = document.createElement('div');
-  navDiv.className = "d-flex justify-content-between align-items-center mb-3";
-  const prevBtn = document.createElement('button');
-  prevBtn.className = "btn btn-secondary";
-  prevBtn.textContent = "Předchozí týden";
-  prevBtn.onclick = () => { currentWeekStart.setDate(currentWeekStart.getDate() - 7); renderGraphicalCalendar(); };
-  const nextBtn = document.createElement('button');
-  nextBtn.className = "btn btn-secondary";
-  nextBtn.textContent = "Následující týden";
-  nextBtn.onclick = () => { currentWeekStart.setDate(currentWeekStart.getDate() + 7); renderGraphicalCalendar(); };
-  const weekDisplay = document.createElement('div');
-  const weekEnd = new Date(currentWeekStart);
-  weekEnd.setDate(currentWeekStart.getDate() + 6);
-  weekDisplay.textContent = "Týden od " + currentWeekStart.toLocaleDateString() + " do " + weekEnd.toLocaleDateString();
-  navDiv.appendChild(prevBtn);
-  navDiv.appendChild(weekDisplay);
-  navDiv.appendChild(nextBtn);
-  modalBody.appendChild(navDiv);
-  
-  const table = document.createElement('table');
-  table.className = "table table-bordered";
-  const thead = document.createElement('thead');
-  const headerRow = document.createElement('tr');
-  // Zobrazíme 7 dní – pondělí až neděle
-  for (let i = 0; i < 7; i++) {
-    const th = document.createElement('th');
-    let day = new Date(currentWeekStart);
-    day.setDate(currentWeekStart.getDate() + i);
-    th.textContent = day.toLocaleDateString('cs-CZ', { weekday: 'long', day: 'numeric', month: 'numeric' });
-    headerRow.appendChild(th);
-  }
-  thead.appendChild(headerRow);
-  table.appendChild(thead);
-  const tbody = document.createElement('tbody');
-  const row = document.createElement('tr');
-  // Vygenerujeme sloupce pro 7 dní
-  for (let i = 0; i < 7; i++) {
-    const td = document.createElement('td');
-    let day = new Date(currentWeekStart);
-    day.setDate(currentWeekStart.getDate() + i);
-    let eventsForDay = [];
-    calendarEvents.forEach(ev => {
-      const eventDate = new Date(ev.date);
-      if (eventDate.toDateString() === day.toDateString()) {
-        eventsForDay.push({ title: ev.title, color: 'blue', id: ev.id, type: 'calendar' });
-      }
-    });
-    clients.forEach(client => {
-      if (client.lastEvaluation) {
-        const evalInfo = calculateEvalDays(client.lastEvaluation);
-        if (new Date(evalInfo.nextEvaluation).toDateString() === day.toDateString()) {
-          eventsForDay.push({ title: `Hodnocení: ${client.name}`, color: 'purple', id: 'eval_' + client.id, type: 'evaluation' });
-        }
-      }
-      client.plans.forEach(plan => {
-        const planDate = new Date(plan.expirationDate);
-        if (planDate.toDateString() === day.toDateString()) {
-          eventsForDay.push({ title: `Plán: ${plan.name}`, color: 'green', id: 'plan_' + plan.id, type: 'plan' });
-        }
-        plan.steps.forEach(step => {
-          const stepDate = new Date(step.date);
-          if (stepDate.toDateString() === day.toDateString()) {
-            eventsForDay.push({ title: `Krok: ${step.description}`, color: 'orange', id: 'step_' + step.id, type: 'step' });
-          }
+    function renderCalendar() {
+      let html = "";
+      if (calendarEvents.length === 0) {
+        html = "<p>Žádné události zatím nebyly přidány.</p>";
+      } else {
+        html = "<ul class='list-group'>";
+        calendarEvents.forEach(event => {
+          html += `<li class="list-group-item d-flex justify-content-between align-items-center">
+                     ${event.title} - ${new Date(event.date).toLocaleDateString()}
+                     <div>
+                       <button class="btn btn-sm btn-secondary" onclick="editCalendarEvent('${event.id}')">Upravit</button>
+                       <button class="btn btn-sm btn-danger" onclick="deleteCalendarEvent('${event.id}')">X</button>
+                     </div>
+                   </li>`;
         });
-      });
-      if (client.contractExpiration) {
-        const contractDate = new Date(client.contractExpiration);
-        if (contractDate.toDateString() === day.toDateString()) {
-          eventsForDay.push({ title: `Smlouva: ${client.name}`, color: 'red', id: 'contract_' + client.id, type: 'contract' });
-        }
+        html += "</ul>";
       }
-    });
-    if (eventsForDay.length > 0) {
-      eventsForDay.forEach(ev => {
-        const evDiv = document.createElement('div');
-        evDiv.style.backgroundColor = ev.color;
-        evDiv.style.color = "white";
-        evDiv.style.padding = "2px 4px";
-        evDiv.style.marginBottom = "2px";
-        evDiv.style.borderRadius = "4px";
-        evDiv.style.cursor = (ev.type === 'calendar') ? "pointer" : "default";
-        evDiv.textContent = ev.title;
-        if (ev.type === 'calendar') {
-          evDiv.onclick = () => editCalendarEvent(ev.id);
-        }
-        td.appendChild(evDiv);
-      });
-    } else {
-      td.textContent = "-";
+      document.getElementById('calendarList').innerHTML = html;
     }
-    row.appendChild(td);
-  }
-  tbody.appendChild(row);
-  table.appendChild(tbody);
-  modalBody.appendChild(table);
-  
-  const exportBtn = document.createElement('button');
-  exportBtn.className = "btn btn-success mt-3";
-  exportBtn.textContent = "Export pro Google kalendář";
-  exportBtn.onclick = exportForGoogleCalendar;
-  modalBody.appendChild(exportBtn);
-}
+    
     function addCalendarEvent(e) {
       e.preventDefault();
       const title = document.getElementById('eventTitle').value.trim();
@@ -1350,10 +1264,12 @@
       });
     }
     
-    // Grafický kalendář
+    // Grafický kalendář – zobrazení celého týdne (pondělí až neděle)
     function getStartOfWeek(date) {
       const day = date.getDay();
-      const diff = (day === 0 ? -6 : 1) - day;
+      // Pokud je neděle (0), považujeme ji za 7 pro výpočet, abychom začali v pondělí
+      const adjustedDay = (day === 0 ? 7 : day);
+      const diff = 1 - adjustedDay;
       const monday = new Date(date);
       monday.setDate(date.getDate() + diff);
       monday.setHours(0,0,0,0);
@@ -1387,7 +1303,7 @@
       nextBtn.onclick = () => { currentWeekStart.setDate(currentWeekStart.getDate() + 7); renderGraphicalCalendar(); };
       const weekDisplay = document.createElement('div');
       const weekEnd = new Date(currentWeekStart);
-      weekEnd.setDate(currentWeekStart.getDate() + 4);
+      weekEnd.setDate(currentWeekStart.getDate() + 6);
       weekDisplay.textContent = "Týden od " + currentWeekStart.toLocaleDateString() + " do " + weekEnd.toLocaleDateString();
       navDiv.appendChild(prevBtn);
       navDiv.appendChild(weekDisplay);
@@ -1398,7 +1314,8 @@
       table.className = "table table-bordered";
       const thead = document.createElement('thead');
       const headerRow = document.createElement('tr');
-      for (let i = 0; i < 5; i++) {
+      // Zobrazíme 7 dní – od pondělí do neděle
+      for (let i = 0; i < 7; i++) {
         const th = document.createElement('th');
         let day = new Date(currentWeekStart);
         day.setDate(currentWeekStart.getDate() + i);
@@ -1409,7 +1326,7 @@
       table.appendChild(thead);
       const tbody = document.createElement('tbody');
       const row = document.createElement('tr');
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < 7; i++) {
         const td = document.createElement('td');
         let day = new Date(currentWeekStart);
         day.setDate(currentWeekStart.getDate() + i);

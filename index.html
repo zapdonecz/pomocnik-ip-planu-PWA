@@ -494,10 +494,11 @@
         `Celkem klientů: ${total} | Hodnocení k aktualizaci: ${overdueEval} | Plány k aktualizaci: ${expiringPlans} | Smlouvy k obnovení: ${expiringContracts}`;
     }
     
-    // Upravená verze renderTasks s barevným označením dnů
+    // Upravená verze renderTasks s barevným označením dnů a kontrolou individuálního plánu a kroků
     function renderTasks() {
       let tasks = [];
       clients.forEach(client => {
+        // Půlroční hodnocení
         if (client.lastEvaluation) {
           const evalInfo = calculateEvalDays(client.lastEvaluation);
           if (evalInfo.daysLeft <= settings.evalThreshold) {
@@ -506,6 +507,7 @@
         } else {
           tasks.push(`U klienta ${client.name} chybí půlroční hodnocení`);
         }
+        // Plány a kroky
         client.plans.forEach(plan => {
           const daysLeft = calculateDaysLeft(plan.expirationDate);
           if (!plan.completed && daysLeft <= settings.planThreshold) {
@@ -520,6 +522,17 @@
             }
           });
         });
+        // Pokud klient nemá žádný individuální plán
+        if (client.plans.length === 0) {
+          tasks.push(`<span style="color:red; font-weight:bold;">Klient ${client.name} nemá individuální plán ani žádné kroky.</span>`);
+        } else {
+          // Pokud má plány, ale žádný z nich nemá kroky
+          let hasSteps = client.plans.some(plan => plan.steps && plan.steps.length > 0);
+          if (!hasSteps) {
+            tasks.push(`<span style="color:red; font-weight:bold;">Klient ${client.name} má individuální plány, ale žádné kroky.</span>`);
+          }
+        }
+        // Smlouva
         if (client.contractExpiration) {
           const contractDaysLeft = calculateDaysLeft(client.contractExpiration);
           if (contractDaysLeft <= settings.contractThreshold) {
@@ -529,6 +542,7 @@
           tasks.push(`U klienta ${client.name} není nastavena smlouva`);
         }
       });
+      // Úkoly z kalendáře – pokud datum události je blízko
       calendarEvents.forEach(event => {
         const daysLeft = calculateDaysLeft(event.date);
         if (daysLeft <= settings.calendarThreshold) {
@@ -1267,7 +1281,6 @@
     // Grafický kalendář – zobrazení celého týdne (pondělí až neděle)
     function getStartOfWeek(date) {
       const day = date.getDay();
-      // Pokud je neděle (0), považujeme ji za 7 pro výpočet, abychom začali v pondělí
       const adjustedDay = (day === 0 ? 7 : day);
       const diff = 1 - adjustedDay;
       const monday = new Date(date);

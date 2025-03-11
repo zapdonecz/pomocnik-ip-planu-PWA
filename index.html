@@ -55,13 +55,10 @@
 </head>
 <body>
   <div class="container">
-    <!-- Hlavička s tlačítkem pro tmavý režim a přizpůsobitelnými tlačítky -->
+    <!-- Hlavička a tlačítko pro tmavý režim -->
     <div class="d-flex justify-content-between align-items-center mb-3">
       <h1 class="mb-0">IP hlídač</h1>
-      <div>
-        <button class="btn btn-outline-secondary" onclick="toggleDarkMode()">Tmavý režim</button>
-        <span id="customButtonsContainer"></span>
-      </div>
+      <button class="btn btn-outline-secondary" onclick="toggleDarkMode()">Tmavý režim</button>
     </div>
     <p id="todayDate" class="mb-4"></p>
     
@@ -73,7 +70,7 @@
       </div>
     </div>
     
-    <!-- Lišta klientů -->
+    <!-- Lišta klientů (zobrazí se pouze pokud jsou klienti) -->
     <div id="clientButtonsContainer" class="mb-4"></div>
     
     <!-- Úkoly k vyřízení -->
@@ -84,7 +81,7 @@
       </div>
     </div>
     
-    <!-- Kalendář -->
+    <!-- Nová sekce Kalendář -->
     <div class="card mb-4">
       <div class="card-body">
         <h5>Kalendář</h5>
@@ -158,12 +155,12 @@
     
     <!-- Footer s informací o verzi -->
     <footer class="text-center mt-5">
-      <small>Program vytvořil Přemysl Pozděna, verze 1.0.4.</small>
+      <small>Program vytvořil Přemysl Pozděna, verze 1.0.3.</small>
     </footer>
   </div>
   
-  <!-- Modály (Nastavení, Editace plánu, kroku, smlouvy, kalendáře, klientských detailů, grafický kalendář, atd.) -->
-  <!-- Například modál pro nastavení -->
+  <!-- Modály -->
+  <!-- Nastavení modal -->
   <div class="modal" tabindex="-1" id="settingsModal">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -201,93 +198,6 @@
               <label for="settingsNotificationInterval" class="form-label">Interval kontroly notifikací (minuty):</label>
               <input type="number" class="form-control" id="settingsNotificationInterval" min="1" required>
             </div>
-            <hr>
-            <h5>Přizpůsobitelná tlačítka</h5>
-            <!-- Tlačítko 1 -->
-            <div class="mb-3">
-              <label for="customButton1_text" class="form-label">Tlačítko 1 - Text:</label>
-              <input type="text" class="form-control" id="customButton1_text">
-            </div>
-            <div class="mb-3">
-              <label for="customButton1_url" class="form-label">Tlačítko 1 - URL:</label>
-              <input type="text" class="form-control" id="customButton1_url">
-            </div>
-            <div class="mb-3">
-              <label for="customButton1_bgColor" class="form-label">Tlačítko 1 - Barva pozadí:</label>
-              <input type="text" class="form-control" id="customButton1_bgColor">
-            </div>
-            <div class="mb-3">
-              <label for="customButton1_fontColor" class="form-label">Tlačítko 1 - Barva textu:</label>
-              <input type="text" class="form-control" id="customButton1_fontColor">
-            </div>
-            <!-- Tlačítko 2 -->
-            <div class="mb-3">
-              <label for="customButton2_text" class="form-label">Tlačítko 2 - Text:</label>
-              <input type="text" class="form-control" id="customButton2_text">
-            </div>
-            <div class="mb-3">
-              <label for="customButton2_url" class="form-label">Tlačítko 2 - URL:</label>
-              <input type="text" class="form-control" id="customButton2_url">
-            </div>
-            <div class="mb-3">
-              <label for="customButton2_bgColor" class="form-label">Tlačítko 2 - Barva pozadí:</label>
-              <input type="text" class="form-control" id="customButton2_bgColor">
-            </div>
-            <div class="mb-3">
-              <label for="customButton2_fontColor" class="form-label">Tlačítko 2 - Barva textu:</label>
-              <input type="text" class="form-control" id="customButton2_fontColor">
-            </div>
-            <!-- Tlačítko 3 -->
-            <div class="mb-3">
-              <label for="customButton3_text" class="form-label">Tlačítko 3 - Text:</label>
-              <input type="text" class="form-control" id="customButton3_text">
-            </div>
-            <div class="mb-3">
-              <label for="customButton3_url" class="form-label">Tlačítko 3 - URL:</label>
-              <input type="text" class="form-control" id="customButton3_url">
-            </div>
-            <div class="mb-3">
-              <label for="customButton3_bgColor" class="form-label">Tlačítko 3 - Barva pozadí:</label>
-              <input type="text" class="form-control" id="customButton3_bgColor">
-            </div>
-            <div class="mb-3">
-              <label for="customButton3_fontColor" class="form-label">Tlačítko 3 - Barva textu:</label>
-              <input type="text" class="form-control" id="customButton3_fontColor">
-            </div>
-            <!-- Tlačítko 4 -->
-            <div class="mb-3">
-              <label for="customButton4_text" class="form-label">Tlačítko 4 - Text:</label>
-              <input type="text" class="form-control" id="customButton4_text">
-            </div>
-            <div class="mb-3">
-              <label for="customButton4_url" class="form-label">Tlačítko 4 - URL:</label>
-              <input type="text" class="form-control" id="customButton4_url">
-            </div>
-            <div class="mb-3">
-              <label for="customButton4_bgColor" class="form-label">Tlačítko 4 - Barva pozadí:</label>
-              <input type="text" class="form-control" id="customButton4_bgColor">
-            </div>
-            <div class="mb-3">
-              <label for="customButton4_fontColor" class="form-label">Tlačítko 4 - Barva textu:</label>
-              <input type="text" class="form-control" id="customButton4_fontColor">
-            </div>
-            <!-- Tlačítko 5 -->
-            <div class="mb-3">
-              <label for="customButton5_text" class="form-label">Tlačítko 5 - Text:</label>
-              <input type="text" class="form-control" id="customButton5_text">
-            </div>
-            <div class="mb-3">
-              <label for="customButton5_url" class="form-label">Tlačítko 5 - URL:</label>
-              <input type="text" class="form-control" id="customButton5_url">
-            </div>
-            <div class="mb-3">
-              <label for="customButton5_bgColor" class="form-label">Tlačítko 5 - Barva pozadí:</label>
-              <input type="text" class="form-control" id="customButton5_bgColor">
-            </div>
-            <div class="mb-3">
-              <label for="customButton5_fontColor" class="form-label">Tlačítko 5 - Barva textu:</label>
-              <input type="text" class="form-control" id="customButton5_fontColor">
-            </div>
             <button type="submit" class="btn btn-primary">Uložit nastavení</button>
             <button type="button" class="btn btn-danger" onclick="resetData()">Resetovat data</button>
             <button type="button" class="btn btn-warning" onclick="clearCompleted()">Vyčistit hotové položky</button>
@@ -297,7 +207,199 @@
     </div>
   </div>
   
-  <!-- Další modály (editace plánu, kroku, smlouvy, kalendáře, klientských detailů, grafický kalendář, atd.) zůstávají beze změny -->
+  <!-- Editace plánu modal -->
+  <div class="modal" tabindex="-1" id="editPlanModal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Upravit plán</h5>
+          <button type="button" class="btn-close" onclick="hideEditPlanModal()"></button>
+        </div>
+        <div class="modal-body">
+          <form id="editPlanForm" onsubmit="savePlanEdits(event)">
+            <div class="mb-3">
+              <label for="editPlanName" class="form-label">Název plánu:</label>
+              <input type="text" class="form-control" id="editPlanName" required>
+            </div>
+            <div class="mb-3">
+              <label for="editPlanNotes" class="form-label">Poznámky:</label>
+              <textarea class="form-control" id="editPlanNotes"></textarea>
+            </div>
+            <div class="mb-3">
+              <label for="editPlanExpiration" class="form-label">Platnost do:</label>
+              <input type="date" class="form-control" id="editPlanExpiration" required>
+            </div>
+            <div class="mb-3 form-check">
+              <input type="checkbox" class="form-check-input" id="editPlanCompleted">
+              <label class="form-check-label" for="editPlanCompleted">Hotový</label>
+            </div>
+            <input type="hidden" id="editPlanClientId">
+            <input type="hidden" id="editPlanId">
+            <button type="submit" class="btn btn-primary">Uložit změny</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Editace kroku modal -->
+  <div class="modal" tabindex="-1" id="editStepModal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Upravit krok</h5>
+          <button type="button" class="btn-close" onclick="hideEditStepModal()"></button>
+        </div>
+        <div class="modal-body">
+          <form id="editStepForm" onsubmit="saveStepEdits(event)">
+            <div class="mb-3">
+              <label for="editStepDescription" class="form-label">Popis kroku:</label>
+              <input type="text" class="form-control" id="editStepDescription" required>
+            </div>
+            <div class="mb-3">
+              <label for="editStepDate" class="form-label">Datum:</label>
+              <input type="date" class="form-control" id="editStepDate" required>
+            </div>
+            <div class="mb-3 form-check">
+              <input type="checkbox" class="form-check-input" id="editStepCompleted">
+              <label class="form-check-label" for="editStepCompleted">Hotový</label>
+            </div>
+            <input type="hidden" id="editStepClientId">
+            <input type="hidden" id="editStepPlanId">
+            <input type="hidden" id="editStepId">
+            <button type="submit" class="btn btn-primary">Uložit změny</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Editace smlouvy modal -->
+  <div class="modal" tabindex="-1" id="editContractModal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Upravit smlouvu</h5>
+          <button type="button" class="btn-close" onclick="hideEditContractModal()"></button>
+        </div>
+        <div class="modal-body">
+          <form id="editContractForm" onsubmit="saveContractEdits(event)">
+            <div class="mb-3">
+              <label for="editContractStart" class="form-label">Datum smlouvy (začátek):</label>
+              <input type="date" class="form-control" id="editContractStart" required>
+            </div>
+            <div class="mb-3">
+              <label for="editContractExpiration" class="form-label">Platnost do:</label>
+              <input type="date" class="form-control" id="editContractExpiration" required>
+            </div>
+            <input type="hidden" id="editContractClientId">
+            <button type="submit" class="btn btn-primary">Uložit smlouvu</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Editace kalendářní události modal -->
+  <div class="modal" tabindex="-1" id="editCalendarModal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Upravit událost</h5>
+          <button type="button" class="btn-close" onclick="hideEditCalendarModal()"></button>
+        </div>
+        <div class="modal-body">
+          <form id="editCalendarForm" onsubmit="saveCalendarEventEdits(event)">
+            <div class="mb-3">
+              <label for="editCalendarTitle" class="form-label">Název události:</label>
+              <input type="text" class="form-control" id="editCalendarTitle" required>
+            </div>
+            <div class="mb-3">
+              <label for="editCalendarDate" class="form-label">Datum:</label>
+              <input type="date" class="form-control" id="editCalendarDate" required>
+            </div>
+            <div class="mb-3">
+              <label for="editCalendarDetails" class="form-label">Detail události:</label>
+              <textarea class="form-control" id="editCalendarDetails"></textarea>
+            </div>
+            <input type="hidden" id="editCalendarId">
+            <button type="submit" class="btn btn-primary">Uložit změny</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Grafický kalendář modal -->
+  <div class="modal" tabindex="-1" id="graphicalCalendarModal">
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Grafický kalendář</h5>
+          <button type="button" class="btn-close" onclick="hideGraphicalCalendar()"></button>
+        </div>
+        <div class="modal-body" id="graphicalCalendarBody">
+          <!-- Dynamicky generovaný obsah kalendáře -->
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Modal: Detaily klienta -->
+  <div class="modal" tabindex="-1" id="clientDetailsModal">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="clientDetailsTitle">Detaily klienta</h5>
+          <button type="button" class="btn-close" onclick="closeClientDetailsModal()"></button>
+        </div>
+        <div class="modal-body">
+          <div id="clientInfoSection">
+            <p id="clientBirthdate"></p>
+            <p id="clientEvaluation"></p>
+          </div>
+          <hr>
+          <div id="clientTasksSection">
+            <h6>Úkoly klienta</h6>
+            <ul id="clientTasksList" class="list-group"></ul>
+          </div>
+          <hr>
+          <div id="clientNotesSection">
+            <h6>Poznámky</h6>
+            <div class="toolbar mb-2">
+              <button type="button" class="btn btn-sm btn-light" onclick="execCmd('bold')">B</button>
+              <button type="button" class="btn btn-sm btn-light" onclick="execCmd('italic')">I</button>
+              <button type="button" class="btn btn-sm btn-light" onclick="execCmd('underline')">U</button>
+            </div>
+            <div id="clientNotes" contenteditable="true" style="border: 1px solid #ccc; padding: 10px; min-height: 100px;"></div>
+          </div>
+          <hr>
+          <div id="clientOtherSection">
+            <h6>Ostatní</h6>
+            <div class="toolbar mb-2">
+              <button type="button" class="btn btn-sm btn-light" onclick="execCmd('bold')">B</button>
+              <button type="button" class="btn btn-sm btn-light" onclick="execCmd('italic')">I</button>
+              <button type="button" class="btn btn-sm btn-light" onclick="execCmd('underline')">U</button>
+            </div>
+            <div id="clientOther" contenteditable="true" style="border: 1px solid #ccc; padding: 10px; min-height: 100px;"></div>
+          </div>
+          <hr>
+          <div id="clientCheckboxesSection">
+            <h6>Úkoly (checkboxy)</h6>
+            <div id="clientCheckboxesList"></div>
+            <div class="input-group mt-2">
+              <input type="text" id="newCheckboxLabel" class="form-control" placeholder="Název checkboxu">
+              <button class="btn btn-secondary" onclick="addClientCheckbox()">Přidat checkbox</button>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" onclick="saveClientDetails()">Uložit</button>
+          <button class="btn btn-secondary" onclick="closeClientDetailsModal()">Zpět do dashboardu</button>
+        </div>
+      </div>
+    </div>
+  </div>
   
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -322,7 +424,7 @@
       notificationInterval: 5
     };
     let settings = {};
-    const appVersion = "1.0.4";
+    const appVersion = "1.0.3";
     
     let currentWeekStart = getStartOfWeek(new Date());
     let currentClientId = null; // pro modal s detaily klienta
@@ -339,7 +441,6 @@
       updateEventClientSelect();
       renderClientButtons();
       loadDarkMode();
-      renderCustomButtons();
       registerServiceWorker();
       if (settings.notificationsEnabled) {
         requestNotificationPermission();
@@ -393,7 +494,6 @@
             renderCalendar();
             updateEventClientSelect();
             renderClientButtons();
-            renderCustomButtons();
             alert('Data byla úspěšně importována.');
           } catch (error) {
             alert('Chyba při importu dat.');
@@ -437,14 +537,6 @@
       } else {
         settings = { ...defaultSettings };
       }
-      // Pokud nejsou nastaveny přizpůsobitelné tlačítka, nastav default pro tlačítko 1 (eQuip)
-      if (!settings.customButtons) {
-        settings.customButtons = [
-          { text: "eQuip", url: "https://e-quip.cz/", bgColor: "blue", fontColor: "white" }
-        ];
-      }
-      // Naplnění nastavení přizpůsobitelných tlačítek v modalu
-      loadCustomButtonsSettings();
     }
     
     function saveSettings() {
@@ -478,7 +570,7 @@
         `Celkem klientů: ${total} | Hodnocení k aktualizaci: ${overdueEval} | Plány k aktualizaci: ${expiringPlans} | Smlouvy k obnovení: ${expiringContracts}`;
     }
     
-    // Upravená verze renderTasks s úpravami dle požadavků – nyní se zobrazují i hotové kroky
+    // Upravená verze renderTasks s barevným označením dnů a kontrolou individuálního plánu a kroků
     function renderTasks() {
       let tasks = [];
       clients.forEach(client => {
@@ -496,16 +588,13 @@
             if (!plan.completed && daysLeft <= settings.planThreshold) {
               tasks.push(`Plán "${plan.name}" u klienta ${client.name} končí za <span class="${getDaysClass(daysLeft)}">${daysLeft} dní</span>`);
             }
-            // Přidáme úkoly pro každý krok – i když je hotový
             if (plan.steps) {
               plan.steps.forEach(step => {
-                const daysLeftStep = calculateDaysLeft(step.date);
                 if (!step.completed) {
+                  const daysLeftStep = calculateDaysLeft(step.date);
                   if (daysLeftStep <= settings.stepThreshold) {
                     tasks.push(`Krok "${step.description}" u plánu "${plan.name}" (klient ${client.name}) končí za <span class="${getDaysClass(daysLeftStep)}">${daysLeftStep} dní</span>`);
                   }
-                } else {
-                  tasks.push(`Krok "${step.description}" u plánu "${plan.name}" (klient ${client.name}) je <span class="badge bg-success">Hotový</span>`);
                 }
               });
             }
@@ -841,8 +930,7 @@
           client.plans.forEach(plan => {
             if (hideCompleted && plan.completed) return;
             const daysLeft = calculateDaysLeft(plan.expirationDate);
-            if (!plan.completed && daysLeft <= settings.planThreshold) {
-              clientHTML += `
+            clientHTML += `
               <div class="card mb-3">
                 <div class="card-header">
                   <strong>${plan.name}</strong> - Platnost do: ${new Date(plan.expirationDate).toLocaleDateString()} (<span class="${getDaysClass(daysLeft)}">${daysLeft} dní</span>)
@@ -865,11 +953,9 @@
               clientHTML += `<ul class="list-group mb-2">`;
               plan.steps.forEach(step => {
                 if (hideCompleted && step.completed) return;
-                const stepDaysLeft = calculateDaysLeft(step.date);
-                if (!step.completed) {
-                  clientHTML += `<li class="list-group-item d-flex justify-content-between align-items-center">
+                clientHTML += `<li class="list-group-item d-flex justify-content-between align-items-center">
                                 ${step.description} - ${new Date(step.date).toLocaleDateString()}
-                                <span class="${getDaysClass(stepDaysLeft)}">${stepDaysLeft} dní</span>
+                                ${step.completed ? '<span class="badge bg-success">Hotový</span>' : ''}
                                 <div>
                                   <button class="btn btn-sm btn-warning" onclick="toggleStepCompletion('${client.id}', '${plan.id}', '${step.id}')">
                                     ${step.completed ? 'Zrušit hotovo' : 'Označit jako hotový'}
@@ -878,19 +964,6 @@
                                   <button class="btn btn-sm btn-danger" onclick="deleteStep('${client.id}', '${plan.id}', '${step.id}')">X</button>
                                 </div>
                               </li>`;
-                } else {
-                  clientHTML += `<li class="list-group-item d-flex justify-content-between align-items-center">
-                                ${step.description} - ${new Date(step.date).toLocaleDateString()}
-                                <span class="badge bg-success">Hotový</span>
-                                <div>
-                                  <button class="btn btn-sm btn-warning" onclick="toggleStepCompletion('${client.id}', '${plan.id}', '${step.id}')">
-                                    ${step.completed ? 'Zrušit hotovo' : 'Označit jako hotový'}
-                                  </button>
-                                  <button class="btn btn-sm btn-secondary" onclick="editStep('${client.id}', '${plan.id}', '${step.id}')">Upravit</button>
-                                  <button class="btn btn-sm btn-danger" onclick="deleteStep('${client.id}', '${plan.id}', '${step.id}')">X</button>
-                                </div>
-                              </li>`;
-                }
               });
               clientHTML += `</ul>`;
             }
@@ -1046,7 +1119,6 @@
       }
     }
     
-    // Při uložení smlouvy se, pokud ještě není nastaveno, nastaví i poslední hodnocení na počáteční datum smlouvy.
     function saveContractEdits(event) {
       event.preventDefault();
       const clientId = document.getElementById('editContractClientId').value;
@@ -1056,9 +1128,6 @@
       if (client) {
         client.contractStart = start;
         client.contractExpiration = expiration;
-        if (!client.lastEvaluation) {
-          client.lastEvaluation = start;
-        }
         saveData();
         renderClients();
         renderSummary();
@@ -1081,7 +1150,6 @@
       document.getElementById('settingsCalendarThreshold').value = settings.calendarThreshold;
       document.getElementById('settingsEnableNotifications').checked = settings.notificationsEnabled;
       document.getElementById('settingsNotificationInterval').value = settings.notificationInterval;
-      loadCustomButtonsSettings();
       const modal = new bootstrap.Modal(document.getElementById('settingsModal'));
       modal.show();
     }
@@ -1101,18 +1169,7 @@
       settings.calendarThreshold = parseInt(document.getElementById('settingsCalendarThreshold').value, 10);
       settings.notificationsEnabled = document.getElementById('settingsEnableNotifications').checked;
       settings.notificationInterval = parseInt(document.getElementById('settingsNotificationInterval').value, 10);
-      settings.customButtons = [];
-      for (let i = 1; i <= 5; i++) {
-        const text = document.getElementById('customButton' + i + '_text').value.trim();
-        const url = document.getElementById('customButton' + i + '_url').value.trim();
-        const bgColor = document.getElementById('customButton' + i + '_bgColor').value.trim();
-        const fontColor = document.getElementById('customButton' + i + '_fontColor').value.trim();
-        if (text && url) {
-          settings.customButtons.push({ text, url, bgColor, fontColor });
-        }
-      }
       saveSettings();
-      renderCustomButtons();
       hideSettings();
       renderSummary();
       renderTasks();
@@ -1577,7 +1634,7 @@
         div.appendChild(input);
         div.appendChild(label);
         
-        // Tlačítko pro smazání checkboxu
+        // Přidání tlačítka pro smazání checkboxu
         const deleteBtn = document.createElement('button');
         deleteBtn.textContent = "Smazat";
         deleteBtn.className = "btn btn-sm btn-danger ms-2";
@@ -1631,19 +1688,15 @@
           }
           if (plan.steps) {
             plan.steps.forEach(step => {
-              const stepDaysLeft = calculateDaysLeft(step.date);
               if (!step.completed) {
-                if (stepDaysLeft <= settings.stepThreshold) {
-                  tasks.push(`Krok "${step.description}" končí za <span class="${getDaysClass(stepDaysLeft)}">${stepDaysLeft} dní</span>`);
+                const daysLeftStep = calculateDaysLeft(step.date);
+                if (daysLeftStep <= settings.stepThreshold) {
+                  tasks.push(`Krok "${step.description}" končí za <span class="${getDaysClass(daysLeftStep)}">${daysLeftStep} dní</span>`);
                 }
-              } else {
-                tasks.push(`Krok "${step.description}" je <span class="badge bg-success">Hotový</span>`);
               }
             });
           }
         });
-      } else {
-        tasks.push(`<span style="color:red; font-weight:bold;">Klient ${client.name} nemá individuální plán ani žádné kroky.</span>`);
       }
       if (client.contractExpiration) {
         const contractDaysLeft = calculateDaysLeft(client.contractExpiration);
@@ -1653,58 +1706,36 @@
       } else {
         tasks.push("Smlouva není nastavena.");
       }
-      let tasksHTML = "";
-      if (tasks.length === 0) {
-        tasksHTML = "<p>Žádné úkoly k vyřízení.</p>";
-      } else {
-        tasksHTML = "<ul class='list-group'>";
-        tasks.forEach(task => {
-          tasksHTML += `<li class="list-group-item">${task}</li>`;
-        });
-        tasksHTML += "</ul>";
-      }
-      document.getElementById('clientTasksList').innerHTML = tasksHTML;
+      calendarEvents.forEach(event => {
+        if (event.clientId === client.id) {
+          const daysLeft = calculateDaysLeft(event.date);
+          tasks.push(`Událost "${event.title}" končí za <span class="${getDaysClass(daysLeft)}">${daysLeft} dní</span>`);
+        }
+      });
+      const list = document.getElementById('clientTasksList');
+      list.innerHTML = "";
+      tasks.forEach(task => {
+        const li = document.createElement('li');
+        li.className = "list-group-item";
+        li.innerHTML = task;
+        list.appendChild(li);
+      });
+    }
+    
+    function execCmd(command) {
+      document.execCommand(command, false, null);
     }
     
     function updateEventClientSelect() {
       const select = document.getElementById('eventClientSelect');
-      select.innerHTML = `<option value="">-- Nezařadit --</option>`;
+      select.innerHTML = '<option value="">-- Nezařadit --</option>';
       clients.forEach(client => {
-        select.innerHTML += `<option value="${client.id}">${client.name}</option>`;
+        const option = document.createElement('option');
+        option.value = client.id;
+        option.textContent = client.name;
+        select.appendChild(option);
       });
     }
-    
-    // Funkce pro vykreslení přizpůsobitelných tlačítek v hlavičce
-    function renderCustomButtons() {
-      const container = document.getElementById('customButtonsContainer');
-      container.innerHTML = "";
-      if (settings.customButtons && settings.customButtons.length > 0) {
-        settings.customButtons.forEach(btnConfig => {
-          if (btnConfig.text && btnConfig.url) {
-            const btn = document.createElement('button');
-            btn.textContent = btnConfig.text;
-            btn.style.backgroundColor = btnConfig.bgColor || '';
-            btn.style.color = btnConfig.fontColor || '';
-            btn.className = "btn ms-2";
-            btn.onclick = () => window.open(btnConfig.url, '_blank');
-            container.appendChild(btn);
-          }
-        });
-      }
-    }
-    
-    // Pomocná funkce pro načtení nastavení přizpůsobitelných tlačítek do modalu
-    function loadCustomButtonsSettings() {
-      for (let i = 1; i <= 5; i++) {
-        const btnConfig = settings.customButtons[i - 1] || { text: "", url: "", bgColor: "", fontColor: "" };
-        document.getElementById('customButton' + i + '_text').value = btnConfig.text || "";
-        document.getElementById('customButton' + i + '_url').value = btnConfig.url || "";
-        document.getElementById('customButton' + i + '_bgColor').value = btnConfig.bgColor || "";
-        document.getElementById('customButton' + i + '_fontColor').value = btnConfig.fontColor || "";
-      }
-    }
-    
-    // Service Worker update a notifikační funkce již jsou implementovány.
   </script>
 </body>
 </html>

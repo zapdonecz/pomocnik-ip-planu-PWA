@@ -47,6 +47,10 @@
       vertical-align: top;
       height: 100px;
     }
+    /* Styl toolbaru pro rich text editaci */
+    .toolbar button {
+      margin-right: 5px;
+    }
   </style>
 </head>
 <body>
@@ -65,6 +69,9 @@
         <p id="summaryText"></p>
       </div>
     </div>
+    
+    <!-- Lišta klientů (zobrazí se pouze pokud jsou klienti) -->
+    <div id="clientButtonsContainer" class="mb-4"></div>
     
     <!-- Úkoly k vyřízení -->
     <div class="card mb-4">
@@ -91,6 +98,12 @@
           <div class="mb-3">
             <label for="eventDetails" class="form-label">Detail události:</label>
             <textarea class="form-control" id="eventDetails"></textarea>
+          </div>
+          <div class="mb-3">
+            <label for="eventClientSelect" class="form-label">Přiřadit klienta:</label>
+            <select id="eventClientSelect" class="form-select">
+              <option value="">-- Nezařadit --</option>
+            </select>
           </div>
           <button type="submit" class="btn btn-success">Přidat událost</button>
         </form>
@@ -142,7 +155,7 @@
     
     <!-- Footer s informací o verzi -->
     <footer class="text-center mt-5">
-      <small>Program vytvořil Přemysl Pozděna, verze 1.0.2.</small>
+      <small>Program vytvořil Přemysl Pozděna, verze 1.0.3.</small>
     </footer>
   </div>
   
@@ -332,15 +345,71 @@
     </div>
   </div>
   
+  <!-- Modal: Detaily klienta -->
+  <div class="modal" tabindex="-1" id="clientDetailsModal">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="clientDetailsTitle">Detaily klienta</h5>
+          <button type="button" class="btn-close" onclick="closeClientDetailsModal()"></button>
+        </div>
+        <div class="modal-body">
+          <div id="clientInfoSection">
+            <p id="clientBirthdate"></p>
+            <p id="clientEvaluation"></p>
+          </div>
+          <hr>
+          <div id="clientTasksSection">
+            <h6>Úkoly klienta</h6>
+            <ul id="clientTasksList" class="list-group"></ul>
+          </div>
+          <hr>
+          <div id="clientNotesSection">
+            <h6>Poznámky</h6>
+            <div class="toolbar mb-2">
+              <button type="button" class="btn btn-sm btn-light" onclick="execCmd('bold')">B</button>
+              <button type="button" class="btn btn-sm btn-light" onclick="execCmd('italic')">I</button>
+              <button type="button" class="btn btn-sm btn-light" onclick="execCmd('underline')">U</button>
+            </div>
+            <div id="clientNotes" contenteditable="true" style="border: 1px solid #ccc; padding: 10px; min-height: 100px;"></div>
+          </div>
+          <hr>
+          <div id="clientOtherSection">
+            <h6>Ostatní</h6>
+            <div class="toolbar mb-2">
+              <button type="button" class="btn btn-sm btn-light" onclick="execCmd('bold')">B</button>
+              <button type="button" class="btn btn-sm btn-light" onclick="execCmd('italic')">I</button>
+              <button type="button" class="btn btn-sm btn-light" onclick="execCmd('underline')">U</button>
+            </div>
+            <div id="clientOther" contenteditable="true" style="border: 1px solid #ccc; padding: 10px; min-height: 100px;"></div>
+          </div>
+          <hr>
+          <div id="clientCheckboxesSection">
+            <h6>Úkoly (checkboxy)</h6>
+            <div id="clientCheckboxesList"></div>
+            <div class="input-group mt-2">
+              <input type="text" id="newCheckboxLabel" class="form-control" placeholder="Název checkboxu">
+              <button class="btn btn-secondary" onclick="addClientCheckbox()">Přidat checkbox</button>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" onclick="saveClientDetails()">Uložit</button>
+          <button class="btn btn-secondary" onclick="closeClientDetailsModal()">Zpět do dashboardu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   
   <script>
     /* Datový model:
-       Klient: { id, name, birthdate, lastEvaluation, contractStart, contractExpiration, detailsVisible, plans: [] }
+       Klient: { id, name, birthdate, lastEvaluation, contractStart, contractExpiration, detailsVisible, plans: [], notes, other, checkboxes: [] }
        Plán: { id, name, notes, expirationDate, completed, steps: [] }
        Krok: { id, description, date, completed }
-       Událost: { id, title, date, details }
+       Událost: { id, title, date, details, clientId (volitelně) }
     */
     let clients = [];
     let calendarEvents = [];
@@ -355,9 +424,10 @@
       notificationInterval: 5
     };
     let settings = {};
-    const appVersion = "1.0.2";
+    const appVersion = "1.0.3";
     
     let currentWeekStart = getStartOfWeek(new Date());
+    let currentClientId = null; // pro modal s detaily klienta
     
     document.addEventListener('DOMContentLoaded', () => {
       loadData();
@@ -368,6 +438,8 @@
       renderSummary();
       renderTasks();
       renderCalendar();
+      updateEventClientSelect();
+      renderClientButtons();
       loadDarkMode();
       registerServiceWorker();
       if (settings.notificationsEnabled) {
@@ -420,6 +492,8 @@
             renderSummary();
             renderTasks();
             renderCalendar();
+            updateEventClientSelect();
+            renderClientButtons();
             alert('Data byla úspěšně importována.');
           } catch (error) {
             alert('Chyba při importu dat.');
@@ -481,10 +555,12 @@
         } else {
           overdueEval++;
         }
-        client.plans.forEach(plan => {
-          const daysLeft = calculateDaysLeft(plan.expirationDate);
-          if (daysLeft <= settings.planThreshold) expiringPlans++;
-        });
+        if (client.plans) {
+          client.plans.forEach(plan => {
+            const daysLeft = calculateDaysLeft(plan.expirationDate);
+            if (daysLeft <= settings.planThreshold) expiringPlans++;
+          });
+        }
         if (client.contractExpiration) {
           const contractDaysLeft = calculateDaysLeft(client.contractExpiration);
           if (contractDaysLeft <= settings.contractThreshold) expiringContracts++;
@@ -498,55 +574,47 @@
     function renderTasks() {
       let tasks = [];
       clients.forEach(client => {
-        // Půlroční hodnocení
         if (client.lastEvaluation) {
           const evalInfo = calculateEvalDays(client.lastEvaluation);
           if (evalInfo.daysLeft <= settings.evalThreshold) {
-            tasks.push(`Hodnocení u klienta ${client.name} končí za <span class="${getDaysClass(evalInfo.daysLeft)}">${evalInfo.daysLeft} dní</span> (${evalInfo.daysLeft < 0 ? "POZDE" : "blízko"})`);
+            tasks.push(`Hodnocení u klienta ${client.name} končí za <span class="${getDaysClass(evalInfo.daysLeft)}">${evalInfo.daysLeft} dní</span>`);
           }
         } else {
           tasks.push(`U klienta ${client.name} chybí půlroční hodnocení`);
         }
-        // Plány a kroky
-        client.plans.forEach(plan => {
-          const daysLeft = calculateDaysLeft(plan.expirationDate);
-          if (!plan.completed && daysLeft <= settings.planThreshold) {
-            tasks.push(`Plán "${plan.name}" u klienta ${client.name} končí za <span class="${getDaysClass(daysLeft)}">${daysLeft} dní</span> (${daysLeft < 0 ? "POZDE" : "brzy"})`);
-          }
-          plan.steps.forEach(step => {
-            if (!step.completed) {
-              const daysLeftStep = calculateDaysLeft(step.date);
-              if (daysLeftStep <= settings.stepThreshold) {
-                tasks.push(`Krok "${step.description}" u plánu "${plan.name}" (klient ${client.name}) končí za <span class="${getDaysClass(daysLeftStep)}">${daysLeftStep} dní</span> (${daysLeftStep < 0 ? "POZDE" : "blízko"})`);
-              }
+        if (client.plans && client.plans.length > 0) {
+          client.plans.forEach(plan => {
+            const daysLeft = calculateDaysLeft(plan.expirationDate);
+            if (!plan.completed && daysLeft <= settings.planThreshold) {
+              tasks.push(`Plán "${plan.name}" u klienta ${client.name} končí za <span class="${getDaysClass(daysLeft)}">${daysLeft} dní</span>`);
+            }
+            if (plan.steps) {
+              plan.steps.forEach(step => {
+                if (!step.completed) {
+                  const daysLeftStep = calculateDaysLeft(step.date);
+                  if (daysLeftStep <= settings.stepThreshold) {
+                    tasks.push(`Krok "${step.description}" u plánu "${plan.name}" (klient ${client.name}) končí za <span class="${getDaysClass(daysLeftStep)}">${daysLeftStep} dní</span>`);
+                  }
+                }
+              });
             }
           });
-        });
-        // Pokud klient nemá žádný individuální plán
-        if (client.plans.length === 0) {
-          tasks.push(`<span style="color:red; font-weight:bold;">Klient ${client.name} nemá individuální plán ani žádné kroky.</span>`);
         } else {
-          // Pokud má plány, ale žádný z nich nemá kroky
-          let hasSteps = client.plans.some(plan => plan.steps && plan.steps.length > 0);
-          if (!hasSteps) {
-            tasks.push(`<span style="color:red; font-weight:bold;">Klient ${client.name} má individuální plány, ale žádné kroky.</span>`);
-          }
+          tasks.push(`<span style="color:red; font-weight:bold;">Klient ${client.name} nemá individuální plán ani žádné kroky.</span>`);
         }
-        // Smlouva
         if (client.contractExpiration) {
           const contractDaysLeft = calculateDaysLeft(client.contractExpiration);
           if (contractDaysLeft <= settings.contractThreshold) {
-            tasks.push(`Smlouva u klienta ${client.name} končí za <span class="${getDaysClass(contractDaysLeft)}">${contractDaysLeft} dní</span> (${contractDaysLeft < 0 ? "VYPRŠELA" : "brzy"})`);
+            tasks.push(`Smlouva u klienta ${client.name} končí za <span class="${getDaysClass(contractDaysLeft)}">${contractDaysLeft} dní</span>`);
           }
         } else {
           tasks.push(`U klienta ${client.name} není nastavena smlouva`);
         }
       });
-      // Úkoly z kalendáře – pokud datum události je blízko
       calendarEvents.forEach(event => {
         const daysLeft = calculateDaysLeft(event.date);
         if (daysLeft <= settings.calendarThreshold) {
-          tasks.push(`Událost "${event.title}" končí za <span class="${getDaysClass(daysLeft)}">${daysLeft} dní</span> (${daysLeft < 0 ? "POZDE" : "blízko"})`);
+          tasks.push(`Událost "${event.title}" končí za <span class="${getDaysClass(daysLeft)}">${daysLeft} dní</span>`);
         }
       });
       let tasksHTML = "";
@@ -570,11 +638,17 @@
         html = "<ul class='list-group'>";
         calendarEvents.forEach(event => {
           html += `<li class="list-group-item d-flex justify-content-between align-items-center">
-                     ${event.title} - ${new Date(event.date).toLocaleDateString()}
-                     <div>
-                       <button class="btn btn-sm btn-secondary" onclick="editCalendarEvent('${event.id}')">Upravit</button>
-                       <button class="btn btn-sm btn-danger" onclick="deleteCalendarEvent('${event.id}')">X</button>
-                     </div>
+                     ${event.title} - ${new Date(event.date).toLocaleDateString()}`;
+          if (event.clientId) {
+            const client = clients.find(c => c.id === event.clientId);
+            if (client) {
+              html += ` - Klient: ${client.name}`;
+            }
+          }
+          html += `<div>
+                     <button class="btn btn-sm btn-secondary" onclick="editCalendarEvent('${event.id}')">Upravit</button>
+                     <button class="btn btn-sm btn-danger" onclick="deleteCalendarEvent('${event.id}')">X</button>
+                   </div>
                    </li>`;
         });
         html += "</ul>";
@@ -594,11 +668,17 @@
           date: date,
           details: details
         };
+        const clientSelect = document.getElementById('eventClientSelect');
+        const selectedClient = clientSelect.value;
+        if (selectedClient) {
+          newEvent.clientId = selectedClient;
+        }
         calendarEvents.push(newEvent);
         saveCalendarEvents();
         renderCalendar();
         renderTasks();
         document.getElementById('calendarForm').reset();
+        updateEventClientSelect();
       }
     }
     
@@ -626,13 +706,18 @@
           contractStart: null,
           contractExpiration: null,
           detailsVisible: false,
-          plans: []
+          plans: [],
+          notes: "",
+          other: "",
+          checkboxes: []
         };
         clients.push(newClient);
         saveData();
         renderClients();
         renderSummary();
         renderTasks();
+        renderClientButtons();
+        updateEventClientSelect();
         document.getElementById('clientForm').reset();
       }
     }
@@ -644,6 +729,8 @@
         renderClients();
         renderSummary();
         renderTasks();
+        renderClientButtons();
+        updateEventClientSelect();
       }
     }
     
@@ -1226,26 +1313,30 @@
             message: `U klienta ${client.name} chybí půlroční hodnocení`
           });
         }
-        client.plans.forEach(plan => {
-          const daysLeft = calculateDaysLeft(plan.expirationDate);
-          if (!plan.completed && daysLeft <= settings.planThreshold) {
-            tasksToNotify.push({
-              id: 'plan_' + plan.id,
-              message: `Plán "${plan.name}" u klienta ${client.name} končí za ${daysLeft} dní`
-            });
-          }
-          plan.steps.forEach(step => {
-            if (!step.completed) {
-              const daysLeftStep = calculateDaysLeft(step.date);
-              if (daysLeftStep <= settings.stepThreshold) {
-                tasksToNotify.push({
-                  id: 'step_' + step.id,
-                  message: `Krok "${step.description}" u plánu "${plan.name}" u klienta ${client.name} končí za ${daysLeftStep} dní`
-                });
-              }
+        if (client.plans) {
+          client.plans.forEach(plan => {
+            const daysLeft = calculateDaysLeft(plan.expirationDate);
+            if (!plan.completed && daysLeft <= settings.planThreshold) {
+              tasksToNotify.push({
+                id: 'plan_' + plan.id,
+                message: `Plán "${plan.name}" u klienta ${client.name} končí za ${daysLeft} dní`
+              });
+            }
+            if (plan.steps) {
+              plan.steps.forEach(step => {
+                if (!step.completed) {
+                  const daysLeftStep = calculateDaysLeft(step.date);
+                  if (daysLeftStep <= settings.stepThreshold) {
+                    tasksToNotify.push({
+                      id: 'step_' + step.id,
+                      message: `Krok "${step.description}" u plánu "${plan.name}" u klienta ${client.name} končí za ${daysLeftStep} dní`
+                    });
+                  }
+                }
+              });
             }
           });
-        });
+        }
         if (client.contractExpiration) {
           const contractDaysLeft = calculateDaysLeft(client.contractExpiration);
           if (contractDaysLeft <= settings.contractThreshold) {
@@ -1327,7 +1418,6 @@
       table.className = "table table-bordered";
       const thead = document.createElement('thead');
       const headerRow = document.createElement('tr');
-      // Zobrazíme 7 dní – od pondělí do neděle
       for (let i = 0; i < 7; i++) {
         const th = document.createElement('th');
         let day = new Date(currentWeekStart);
@@ -1347,39 +1437,43 @@
         calendarEvents.forEach(ev => {
           const eventDate = new Date(ev.date);
           if (eventDate.toDateString() === day.toDateString()) {
-            eventsForDay.push({ title: ev.title, color: 'blue', id: ev.id, type: 'calendar' });
+            eventsForDay.push({ title: ev.title, id: ev.id, type: 'calendar' });
           }
         });
         clients.forEach(client => {
           if (client.lastEvaluation) {
             const evalInfo = calculateEvalDays(client.lastEvaluation);
             if (new Date(evalInfo.nextEvaluation).toDateString() === day.toDateString()) {
-              eventsForDay.push({ title: `Hodnocení: ${client.name}`, color: 'purple', id: 'eval_' + client.id, type: 'evaluation' });
+              eventsForDay.push({ title: `Hodnocení: ${client.name}`, id: 'eval_' + client.id, type: 'evaluation' });
             }
           }
-          client.plans.forEach(plan => {
-            const planDate = new Date(plan.expirationDate);
-            if (planDate.toDateString() === day.toDateString()) {
-              eventsForDay.push({ title: `Plán: ${plan.name}`, color: 'green', id: 'plan_' + plan.id, type: 'plan' });
-            }
-            plan.steps.forEach(step => {
-              const stepDate = new Date(step.date);
-              if (stepDate.toDateString() === day.toDateString()) {
-                eventsForDay.push({ title: `Krok: ${step.description}`, color: 'orange', id: 'step_' + step.id, type: 'step' });
+          if (client.plans) {
+            client.plans.forEach(plan => {
+              const planDate = new Date(plan.expirationDate);
+              if (planDate.toDateString() === day.toDateString()) {
+                eventsForDay.push({ title: `Plán: ${plan.name}`, id: 'plan_' + plan.id, type: 'plan' });
+              }
+              if (plan.steps) {
+                plan.steps.forEach(step => {
+                  const stepDate = new Date(step.date);
+                  if (stepDate.toDateString() === day.toDateString()) {
+                    eventsForDay.push({ title: `Krok: ${step.description}`, id: 'step_' + step.id, type: 'step' });
+                  }
+                });
               }
             });
-          });
+          }
           if (client.contractExpiration) {
             const contractDate = new Date(client.contractExpiration);
             if (contractDate.toDateString() === day.toDateString()) {
-              eventsForDay.push({ title: `Smlouva: ${client.name}`, color: 'red', id: 'contract_' + client.id, type: 'contract' });
+              eventsForDay.push({ title: `Smlouva: ${client.name}`, id: 'contract_' + client.id, type: 'contract' });
             }
           }
         });
         if (eventsForDay.length > 0) {
           eventsForDay.forEach(ev => {
             const evDiv = document.createElement('div');
-            evDiv.style.backgroundColor = ev.color;
+            evDiv.style.backgroundColor = ev.type === 'calendar' ? 'blue' : 'gray';
             evDiv.style.color = "white";
             evDiv.style.padding = "2px 4px";
             evDiv.style.marginBottom = "2px";
@@ -1457,6 +1551,166 @@
       const modalEl = document.getElementById('editCalendarModal');
       const modal = bootstrap.Modal.getInstance(modalEl);
       modal.hide();
+    }
+    
+    // FUNKCE PRO MODAL DETALÍ KLIENTA
+    function renderClientButtons() {
+      const container = document.getElementById('clientButtonsContainer');
+      container.innerHTML = "";
+      if (clients.length === 0) return;
+      clients.forEach(client => {
+        const btn = document.createElement('button');
+        btn.className = "btn btn-info me-2";
+        btn.textContent = client.name;
+        btn.onclick = () => openClientDetailsModal(client.id);
+        container.appendChild(btn);
+      });
+    }
+    
+    function openClientDetailsModal(clientId) {
+      currentClientId = clientId;
+      const client = clients.find(c => c.id === clientId);
+      if (!client) return;
+      document.getElementById('clientDetailsTitle').textContent = "Detaily: " + client.name;
+      document.getElementById('clientBirthdate').textContent = "Narozen: " + new Date(client.birthdate).toLocaleDateString();
+      if (client.lastEvaluation) {
+        const evalInfo = calculateEvalDays(client.lastEvaluation);
+        document.getElementById('clientEvaluation').innerHTML = `Poslední hodnocení: ${new Date(client.lastEvaluation).toLocaleDateString()} | Další: ${evalInfo.nextEvaluation.toLocaleDateString()} (<span class="${getDaysClass(evalInfo.daysLeft)}">${evalInfo.daysLeft} dní</span>)`;
+      } else {
+        document.getElementById('clientEvaluation').textContent = "Hodnocení nebylo provedeno.";
+      }
+      document.getElementById('clientNotes').innerHTML = client.notes || "";
+      document.getElementById('clientOther').innerHTML = client.other || "";
+      if (!client.checkboxes) {
+        client.checkboxes = [];
+      }
+      renderClientCheckboxes(client);
+      renderClientTasks(client);
+      const modal = new bootstrap.Modal(document.getElementById('clientDetailsModal'));
+      modal.show();
+    }
+    
+    function closeClientDetailsModal() {
+      const modalEl = document.getElementById('clientDetailsModal');
+      const modal = bootstrap.Modal.getInstance(modalEl);
+      modal.hide();
+    }
+    
+    function saveClientDetails() {
+      const client = clients.find(c => c.id === currentClientId);
+      if (!client) return;
+      client.notes = document.getElementById('clientNotes').innerHTML;
+      client.other = document.getElementById('clientOther').innerHTML;
+      saveData();
+      renderClients();
+      renderClientButtons();
+      updateEventClientSelect();
+      closeClientDetailsModal();
+    }
+    
+    function renderClientCheckboxes(client) {
+      const container = document.getElementById('clientCheckboxesList');
+      container.innerHTML = "";
+      client.checkboxes.forEach((checkbox, index) => {
+        const div = document.createElement('div');
+        div.className = "form-check";
+        const input = document.createElement('input');
+        input.type = "checkbox";
+        input.className = "form-check-input";
+        input.id = `client_${client.id}_checkbox_${index}`;
+        input.checked = checkbox.checked;
+        input.onchange = function() {
+          checkbox.checked = input.checked;
+          saveData();
+        };
+        const label = document.createElement('label');
+        label.className = "form-check-label";
+        label.htmlFor = input.id;
+        label.textContent = checkbox.label;
+        div.appendChild(input);
+        div.appendChild(label);
+        container.appendChild(div);
+      });
+    }
+    
+    function addClientCheckbox() {
+      const labelInput = document.getElementById('newCheckboxLabel');
+      const labelText = labelInput.value.trim();
+      if (!labelText) return;
+      const client = clients.find(c => c.id === currentClientId);
+      if (!client) return;
+      if (!client.checkboxes) client.checkboxes = [];
+      client.checkboxes.push({ label: labelText, checked: false });
+      labelInput.value = "";
+      renderClientCheckboxes(client);
+      saveData();
+    }
+    
+    function renderClientTasks(client) {
+      const tasks = [];
+      if (client.lastEvaluation) {
+        const evalInfo = calculateEvalDays(client.lastEvaluation);
+        if (evalInfo.daysLeft <= settings.evalThreshold) {
+          tasks.push(`Hodnocení končí za <span class="${getDaysClass(evalInfo.daysLeft)}">${evalInfo.daysLeft} dní</span>`);
+        }
+      } else {
+        tasks.push("Chybí půlroční hodnocení.");
+      }
+      if (client.plans && client.plans.length > 0) {
+        client.plans.forEach(plan => {
+          const daysLeft = calculateDaysLeft(plan.expirationDate);
+          if (!plan.completed && daysLeft <= settings.planThreshold) {
+            tasks.push(`Plán "${plan.name}" končí za <span class="${getDaysClass(daysLeft)}">${daysLeft} dní</span>`);
+          }
+          if (plan.steps) {
+            plan.steps.forEach(step => {
+              if (!step.completed) {
+                const daysLeftStep = calculateDaysLeft(step.date);
+                if (daysLeftStep <= settings.stepThreshold) {
+                  tasks.push(`Krok "${step.description}" končí za <span class="${getDaysClass(daysLeftStep)}">${daysLeftStep} dní</span>`);
+                }
+              }
+            });
+          }
+        });
+      }
+      if (client.contractExpiration) {
+        const contractDaysLeft = calculateDaysLeft(client.contractExpiration);
+        if (contractDaysLeft <= settings.contractThreshold) {
+          tasks.push(`Smlouva končí za <span class="${getDaysClass(contractDaysLeft)}">${contractDaysLeft} dní</span>`);
+        }
+      } else {
+        tasks.push("Smlouva není nastavena.");
+      }
+      calendarEvents.forEach(event => {
+        if (event.clientId === client.id) {
+          const daysLeft = calculateDaysLeft(event.date);
+          tasks.push(`Událost "${event.title}" končí za <span class="${getDaysClass(daysLeft)}">${daysLeft} dní</span>`);
+        }
+      });
+      const list = document.getElementById('clientTasksList');
+      list.innerHTML = "";
+      tasks.forEach(task => {
+        const li = document.createElement('li');
+        li.className = "list-group-item";
+        li.innerHTML = task;
+        list.appendChild(li);
+      });
+    }
+    
+    function execCmd(command) {
+      document.execCommand(command, false, null);
+    }
+    
+    function updateEventClientSelect() {
+      const select = document.getElementById('eventClientSelect');
+      select.innerHTML = '<option value="">-- Nezařadit --</option>';
+      clients.forEach(client => {
+        const option = document.createElement('option');
+        option.value = client.id;
+        option.textContent = client.name;
+        select.appendChild(option);
+      });
     }
   </script>
 </body>

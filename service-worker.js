@@ -2,7 +2,7 @@ const CACHE_NAME = 'ip-hlidac-cache-v2';
 const urlsToCache = [
   './',
   './index.html',
-  './style.css',      // Uprav podle názvu tvého CSS souboru, pokud nějaký používáš
+  './style.css',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png'
@@ -45,3 +45,4 @@ self.addEventListener('fetch', event => {
       .then(response => response || fetch(event.request))
   );
 });
+

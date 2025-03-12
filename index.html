@@ -142,9 +142,15 @@
       </div>
     </div>
     
-    <!-- Vyhledávání klientů -->
-    <div class="mb-3">
-      <input type="text" id="searchInput" class="form-control" placeholder="Hledat klienta podle jména" onkeyup="filterClients()">
+    <!-- Vyhledávání klientů a řazení -->
+    <div class="mb-3 d-flex">
+      <input type="text" id="searchInput" class="form-control me-2" placeholder="Hledat klienta podle jména" onkeyup="filterClients()">
+      <select id="sortSelect" class="form-select" onchange="filterClients()">
+          <option value="name_asc">Řadit podle jména vzestupně</option>
+          <option value="name_desc">Řadit podle jména sestupně</option>
+          <option value="birthdate_asc">Řadit podle data narození vzestupně</option>
+          <option value="birthdate_desc">Řadit podle data narození sestupně</option>
+      </select>
     </div>
     
     <!-- Globální přepínač pro skrytí hotových položek -->
@@ -158,7 +164,7 @@
     
     <!-- Footer s informací o verzi -->
     <footer class="text-center mt-5">
-      <small>Program vytvořil Přemysl Pozděna, verze 1.0.4.</small>
+      <small>Program vytvořil Přemku, verze 1.0.5.</small>
     </footer>
   </div>
   
@@ -316,7 +322,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">Upravit událost</h5>
-          <button type="button" class="btn-close" onclick="hideEditCalendarModal()"></button>
+          <!-- Odebrán tlačítko pro zavření -->
         </div>
         <div class="modal-body">
           <form id="editCalendarForm" onsubmit="saveCalendarEventEdits(event)">
@@ -442,7 +448,7 @@
       ]
     };
     let settings = {};
-    const appVersion = "1.0.4";
+    const appVersion = "1.0.5";
     
     let currentWeekStart = getStartOfWeek(new Date());
     let currentClientId = null; // pro modal s detaily klienta
@@ -557,7 +563,6 @@
       } else {
         settings = { ...defaultSettings };
       }
-      // Ensure customButtons exists
       if (!settings.customButtons) {
         settings.customButtons = defaultSettings.customButtons;
       }
@@ -594,7 +599,6 @@
         `Celkem klientů: ${total} | Hodnocení k aktualizaci: ${overdueEval} | Plány k aktualizaci: ${expiringPlans} | Smlouvy k obnovení: ${expiringContracts}`;
     }
     
-    // Upravená verze renderTasks s úpravou zobrazení kroků
     function renderTasks() {
       let tasks = [];
       clients.forEach(client => {
@@ -617,7 +621,6 @@
                 const daysLeftStep = calculateDaysLeft(step.date);
                 if (daysLeftStep <= settings.stepThreshold) {
                   let taskText = `Krok "${step.description}" u plánu "${plan.name}" (klient ${client.name}) končí za <span class="${getDaysClass(daysLeftStep)}">${daysLeftStep} dní</span>`;
-                  // Pokud má klient individuální plán, zobrazíme i hotové kroky
                   if (client.plans.length > 0 && step.completed) {
                     taskText += " (hotový)";
                   }
@@ -641,7 +644,15 @@
       calendarEvents.forEach(event => {
         const daysLeft = calculateDaysLeft(event.date);
         if (daysLeft <= settings.calendarThreshold) {
-          tasks.push(`Událost "${event.title}" končí za <span class="${getDaysClass(daysLeft)}">${daysLeft} dní</span>`);
+          let taskText = `Událost "${event.title}"`;
+          if(event.clientId) {
+            let client = clients.find(c => c.id === event.clientId);
+            if(client) {
+              taskText += ` pro klienta <strong>${client.name}</strong>`;
+            }
+          }
+          taskText += ` končí za <span class="${getDaysClass(daysLeft)}">${daysLeft} dní</span>`;
+          tasks.push(taskText);
         }
       });
       let tasksHTML = "";
@@ -902,12 +913,22 @@
       const container = document.getElementById('clientsList');
       container.innerHTML = "";
       const searchQuery = document.getElementById('searchInput').value.toLowerCase();
-      const hideCompleted = document.getElementById('hideCompleted').checked;
-      if (clients.length === 0) {
+      const sortValue = document.getElementById('sortSelect') ? document.getElementById('sortSelect').value : "name_asc";
+      let sortedClients = [...clients];
+      if (sortValue === "name_asc") {
+          sortedClients.sort((a,b) => a.name.localeCompare(b.name));
+      } else if (sortValue === "name_desc") {
+          sortedClients.sort((a,b) => b.name.localeCompare(a.name));
+      } else if (sortValue === "birthdate_asc") {
+          sortedClients.sort((a,b) => new Date(a.birthdate) - new Date(b.birthdate));
+      } else if (sortValue === "birthdate_desc") {
+          sortedClients.sort((a,b) => new Date(b.birthdate) - new Date(a.birthdate));
+      }
+      if (sortedClients.length === 0) {
         container.innerHTML = "<p>Žádní klienti zatím nejsou přidáni.</p>";
         return;
       }
-      clients.forEach(client => {
+      sortedClients.forEach(client => {
         if (searchQuery && !client.name.toLowerCase().includes(searchQuery)) return;
         const clientCard = document.createElement('div');
         clientCard.className = "card mb-4";
@@ -955,7 +976,6 @@
           clientHTML += `<p>Žádné plány zatím nebyly přidány.</p>`;
         } else {
           client.plans.forEach(plan => {
-            if (hideCompleted && plan.completed) return;
             const daysLeft = calculateDaysLeft(plan.expirationDate);
             clientHTML += `
               <div class="card mb-3">
@@ -979,7 +999,6 @@
             } else {
               clientHTML += `<ul class="list-group mb-2">`;
               plan.steps.forEach(step => {
-                if (hideCompleted && step.completed) return;
                 const daysLeftStep = calculateDaysLeft(step.date);
                 let stepText = `${step.description} - ${new Date(step.date).toLocaleDateString()}`;
                 if (client.plans.length > 0 && step.completed) {
@@ -1037,7 +1056,6 @@
       });
     }
     
-    // Modal pro editaci plánu, kroku a smlouvy – funkce zůstávají původní
     function editPlan(clientId, planId) {
       const client = clients.find(c => c.id === clientId);
       if (client) {
@@ -1159,7 +1177,6 @@
       if (client) {
         client.contractStart = start;
         client.contractExpiration = expiration;
-        // Automatické nastavení posledního hodnocení, pokud není nastaveno
         if (!client.lastEvaluation && start) {
           client.lastEvaluation = start;
         }
@@ -1185,10 +1202,7 @@
       document.getElementById('settingsCalendarThreshold').value = settings.calendarThreshold;
       document.getElementById('settingsEnableNotifications').checked = settings.notificationsEnabled;
       document.getElementById('settingsNotificationInterval').value = settings.notificationInterval;
-      
-      // Render custom buttons config v nastavení
       renderCustomButtonsConfig();
-      
       const modal = new bootstrap.Modal(document.getElementById('settingsModal'));
       modal.show();
     }
@@ -1208,8 +1222,6 @@
       settings.calendarThreshold = parseInt(document.getElementById('settingsCalendarThreshold').value, 10);
       settings.notificationsEnabled = document.getElementById('settingsEnableNotifications').checked;
       settings.notificationInterval = parseInt(document.getElementById('settingsNotificationInterval').value, 10);
-      
-      // Uložení konfigurace přizpůsobitelných tlačítek
       const customButtons = [];
       const configContainers = document.querySelectorAll('.custom-button-config');
       configContainers.forEach(container => {
@@ -1289,7 +1301,6 @@
       return 'days-red';
     }
     
-    // Service Worker registrace s notifikací nové verze
     function registerServiceWorker() {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./service-worker.js')
@@ -1333,7 +1344,6 @@
         .catch(err => console.error('Chyba při registraci Service Workeru:', err));
     }
     
-    // Notification API
     function requestNotificationPermission() {
       if ('Notification' in window) {
         if (Notification.permission === 'default') {
@@ -1407,9 +1417,15 @@
       calendarEvents.forEach(event => {
         const daysLeft = calculateDaysLeft(event.date);
         if (daysLeft <= settings.calendarThreshold) {
+          let message = `Událost "${event.title}"`;
+          if (event.clientId) {
+            let client = clients.find(c => c.id === event.clientId);
+            if(client) message += ` pro klienta ${client.name}`;
+          }
+          message += ` končí za ${daysLeft} dní`;
           tasksToNotify.push({
             id: 'calendar_' + event.id,
-            message: `Událost "${event.title}" končí za ${daysLeft} dní`
+            message: message
           });
         }
       });
@@ -1421,7 +1437,6 @@
       });
     }
     
-    // Grafický kalendář – zobrazení celého týdne (pondělí až neděle)
     function getStartOfWeek(date) {
       const day = date.getDay();
       const adjustedDay = (day === 0 ? 7 : day);
@@ -1489,7 +1504,15 @@
         calendarEvents.forEach(ev => {
           const eventDate = new Date(ev.date);
           if (eventDate.toDateString() === day.toDateString()) {
-            eventsForDay.push({ title: ev.title, id: ev.id, type: 'calendar' });
+            let title = ev.title;
+            if(ev.details) {
+              title += " - " + ev.details;
+            }
+            if(ev.clientId) {
+              let client = clients.find(c => c.id === ev.clientId);
+              if(client) { title += " (" + client.name + ")"; }
+            }
+            eventsForDay.push({ title: title, id: ev.id, type: 'calendar' });
           }
         });
         clients.forEach(client => {
@@ -1509,7 +1532,7 @@
                 plan.steps.forEach(step => {
                   const stepDate = new Date(step.date);
                   if (stepDate.toDateString() === day.toDateString()) {
-                    eventsForDay.push({ title: `Krok: ${step.description}`, id: 'step_' + step.id, type: 'step' });
+                    eventsForDay.push({ title: `Krok: ${step.description} (${client.name})`, id: 'step_' + step.id, type: 'step' });
                   }
                 });
               }
@@ -1525,16 +1548,13 @@
         if (eventsForDay.length > 0) {
           eventsForDay.forEach(ev => {
             const evDiv = document.createElement('div');
-            evDiv.style.backgroundColor = ev.type === 'calendar' ? 'blue' : 'gray';
+            // Odstraněn click handler, události nejsou klikatelná
+            evDiv.style.backgroundColor = (ev.type === 'calendar') ? 'blue' : 'gray';
             evDiv.style.color = "white";
             evDiv.style.padding = "2px 4px";
             evDiv.style.marginBottom = "2px";
             evDiv.style.borderRadius = "4px";
-            evDiv.style.cursor = (ev.type === 'calendar') ? "pointer" : "default";
             evDiv.textContent = ev.title;
-            if (ev.type === 'calendar') {
-              evDiv.onclick = () => editCalendarEvent(ev.id);
-            }
             td.appendChild(evDiv);
           });
         } else {
@@ -1576,12 +1596,41 @@
         document.getElementById('editCalendarDate').value = eventObj.date;
         document.getElementById('editCalendarDetails').value = eventObj.details;
         document.getElementById('editCalendarId').value = eventId;
-        const modal = new bootstrap.Modal(document.getElementById('editCalendarModal'));
+        // Modal s backdrop static a keyboard false, aby se nedalo zavřít
+        const modal = new bootstrap.Modal(document.getElementById('editCalendarModal'), {backdrop: 'static', keyboard: false});
         modal.show();
       }
     }
     
-    // FUNKCE PRO MODAL DETALÍ KLIENTA
+    function saveCalendarEventEdits(event) {
+      event.preventDefault();
+      const eventId = document.getElementById('editCalendarId').value;
+      const title = document.getElementById('editCalendarTitle').value.trim();
+      const date = document.getElementById('editCalendarDate').value;
+      const details = document.getElementById('editCalendarDetails').value.trim();
+      const eventObj = calendarEvents.find(ev => ev.id === eventId);
+      if (eventObj) {
+        eventObj.title = title;
+        eventObj.date = date;
+        eventObj.details = details;
+        saveCalendarEvents();
+        renderCalendar();
+        renderTasks();
+      }
+      // Nepovolujeme zavření modal okna – uživatel může pouze uložit změny
+    }
+    
+    function updateEventClientSelect() {
+      const select = document.getElementById('eventClientSelect');
+      select.innerHTML = `<option value="">-- Nezařadit --</option>`;
+      clients.forEach(client => {
+        const option = document.createElement('option');
+        option.value = client.id;
+        option.textContent = client.name;
+        select.appendChild(option);
+      });
+    }
+    
     function renderClientButtons() {
       const container = document.getElementById('clientButtonsContainer');
       container.innerHTML = "";
@@ -1703,39 +1752,11 @@
           tasks.push(`Hodnocení končí za <span class="${getDaysClass(evalInfo.daysLeft)}">${evalInfo.daysLeft} dní</span>`);
         }
       } else {
-        tasks.push("Chybí půlroční hodnocení.");
-      }
-      if (client.plans && client.plans.length > 0) {
-        client.plans.forEach(plan => {
-          const daysLeft = calculateDaysLeft(plan.expirationDate);
-          if (!plan.completed && daysLeft <= settings.planThreshold) {
-            tasks.push(`Plán "${plan.name}" končí za <span class="${getDaysClass(daysLeft)}">${daysLeft} dní</span>`);
-          }
-          if (plan.steps) {
-            plan.steps.forEach(step => {
-              const daysLeftStep = calculateDaysLeft(step.date);
-              if (daysLeftStep <= settings.stepThreshold) {
-                let stepText = `Krok "${step.description}" končí za <span class="${getDaysClass(daysLeftStep)}">${daysLeftStep} dní</span>`;
-                if (client.plans.length > 0 && step.completed) {
-                  stepText += " (hotový)";
-                }
-                tasks.push(stepText);
-              }
-            });
-          }
-        });
-      }
-      if (client.contractExpiration) {
-        const contractDaysLeft = calculateDaysLeft(client.contractExpiration);
-        if (contractDaysLeft <= settings.contractThreshold) {
-          tasks.push(`Smlouva končí za <span class="${getDaysClass(contractDaysLeft)}">${contractDaysLeft} dní</span>`);
-        }
-      } else {
-        tasks.push("Smlouva není nastavena.");
+        tasks.push("Chybí půlroční hodnocení");
       }
       let tasksHTML = "";
       if (tasks.length === 0) {
-        tasksHTML = "<p>Žádné úkoly.</p>";
+        tasksHTML = "<p>Žádné úkoly k vyřízení.</p>";
       } else {
         tasksHTML = "<ul class='list-group'>";
         tasks.forEach(task => {
@@ -1746,86 +1767,98 @@
       document.getElementById('clientTasksList').innerHTML = tasksHTML;
     }
     
-    function updateEventClientSelect() {
-      const select = document.getElementById('eventClientSelect');
-      select.innerHTML = `<option value="">-- Nezařadit --</option>`;
-      clients.forEach(client => {
-        const option = document.createElement('option');
-        option.value = client.id;
-        option.textContent = client.name;
-        select.appendChild(option);
-      });
-    }
-    
-    // Custom Buttons
-    function renderCustomButtons() {
-      const container = document.getElementById('customButtonsContainer');
-      container.innerHTML = "";
-      if (settings.customButtons && settings.customButtons.length > 0) {
-        settings.customButtons.forEach(btnConfig => {
-          const btn = document.createElement('button');
-          btn.className = "btn btn-outline-primary me-2";
-          btn.textContent = btnConfig.name;
-          btn.style.backgroundColor = btnConfig.bgColor;
-          btn.style.color = btnConfig.textColor;
-          btn.onclick = () => window.open(btnConfig.url, '_blank');
-          container.appendChild(btn);
-        });
+    // Funkce pro přizpůsobitelná tlačítka v nastavení
+    function addCustomButtonConfig() {
+      const container = document.getElementById('customButtonsConfig');
+      if (container.children.length >= 5) {
+         alert("Maximálně 5 tlačítek.");
+         return;
       }
+      const div = document.createElement('div');
+      div.className = "mb-2 custom-button-config";
+      div.innerHTML = `
+        <input type="text" class="form-control mb-1 custom-button-name" placeholder="Název tlačítka" required>
+        <div class="d-flex">
+          <select class="form-select me-2 custom-button-bgcolor" required>
+            <option value="">Barva tlačítka</option>
+            <option value="blue">Modrá</option>
+            <option value="red">Červená</option>
+            <option value="green">Zelená</option>
+            <option value="orange">Oranžová</option>
+            <option value="purple">Fialová</option>
+          </select>
+          <select class="form-select custom-button-textcolor" required>
+            <option value="">Barva písma</option>
+            <option value="white">Bílá</option>
+            <option value="black">Černá</option>
+            <option value="yellow">Žlutá</option>
+            <option value="gray">Šedá</option>
+            <option value="pink">Růžová</option>
+          </select>
+        </div>
+        <input type="url" class="form-control mt-1 custom-button-url" placeholder="URL" required>
+        <button type="button" class="btn btn-sm btn-danger mt-1" onclick="this.parentElement.remove()">Odstranit tlačítko</button>
+      `;
+      container.appendChild(div);
     }
     
     function renderCustomButtonsConfig() {
       const container = document.getElementById('customButtonsConfig');
       container.innerHTML = "";
       if (settings.customButtons && settings.customButtons.length > 0) {
-        settings.customButtons.forEach((btnConfig, index) => {
-          container.innerHTML += `
-            <div class="custom-button-config mb-2" data-index="${index}">
-              <label class="form-label">Tlačítko ${index + 1}:</label>
-              <input type="text" class="form-control custom-button-name" placeholder="Název tlačítka" value="${btnConfig.name}" required>
-              <input type="text" class="form-control custom-button-bgcolor" placeholder="Barva tlačítka" value="${btnConfig.bgColor}" required>
-              <input type="text" class="form-control custom-button-textcolor" placeholder="Barva písma" value="${btnConfig.textColor}" required>
-              <input type="url" class="form-control custom-button-url" placeholder="URL" value="${btnConfig.url}" required>
-              <button type="button" class="btn btn-sm btn-danger mt-1" onclick="removeCustomButtonConfig(${index})">Odstranit tlačítko</button>
-              <hr>
-            </div>`;
+        settings.customButtons.forEach(btn => {
+          const div = document.createElement('div');
+          div.className = "mb-2 custom-button-config";
+          div.innerHTML = `
+                <input type="text" class="form-control mb-1 custom-button-name" placeholder="Název tlačítka" value="${btn.name}" required>
+                <div class="d-flex">
+                  <select class="form-select me-2 custom-button-bgcolor" required>
+                    <option value="">Barva tlačítka</option>
+                    <option value="blue" ${btn.bgColor==='blue' ? 'selected' : ''}>Modrá</option>
+                    <option value="red" ${btn.bgColor==='red' ? 'selected' : ''}>Červená</option>
+                    <option value="green" ${btn.bgColor==='green' ? 'selected' : ''}>Zelená</option>
+                    <option value="orange" ${btn.bgColor==='orange' ? 'selected' : ''}>Oranžová</option>
+                    <option value="purple" ${btn.bgColor==='purple' ? 'selected' : ''}>Fialová</option>
+                  </select>
+                  <select class="form-select custom-button-textcolor" required>
+                    <option value="">Barva písma</option>
+                    <option value="white" ${btn.textColor==='white' ? 'selected' : ''}>Bílá</option>
+                    <option value="black" ${btn.textColor==='black' ? 'selected' : ''}>Černá</option>
+                    <option value="yellow" ${btn.textColor==='yellow' ? 'selected' : ''}>Žlutá</option>
+                    <option value="gray" ${btn.textColor==='gray' ? 'selected' : ''}>Šedá</option>
+                    <option value="pink" ${btn.textColor==='pink' ? 'selected' : ''}>Růžová</option>
+                  </select>
+                </div>
+                <input type="url" class="form-control mt-1 custom-button-url" placeholder="URL" value="${btn.url}" required>
+                <button type="button" class="btn btn-sm btn-danger mt-1" onclick="this.parentElement.remove()">Odstranit tlačítko</button>
+          `;
+          container.appendChild(div);
         });
       }
     }
     
-    function addCustomButtonConfig() {
-      const currentCount = document.querySelectorAll('.custom-button-config').length;
-      if (currentCount >= 5) {
-        alert("Maximálně 5 tlačítek.");
-        return;
+    function renderCustomButtons() {
+      const container = document.getElementById('customButtonsContainer');
+      container.innerHTML = "";
+      if (settings.customButtons && settings.customButtons.length > 0) {
+        settings.customButtons.forEach(btn => {
+          const button = document.createElement('button');
+          button.className = "btn me-2";
+          button.textContent = btn.name;
+          button.style.backgroundColor = btn.bgColor;
+          button.style.color = btn.textColor;
+          button.onclick = () => { window.open(btn.url, '_blank'); };
+          container.appendChild(button);
+        });
+      } else {
+        const button = document.createElement('button');
+        button.className = "btn me-2";
+        button.textContent = "eQuip";
+        button.style.backgroundColor = "blue";
+        button.style.color = "white";
+        button.onclick = () => { window.open("https://e-quip.cz/", '_blank'); };
+        container.appendChild(button);
       }
-      const container = document.getElementById('customButtonsConfig');
-      container.innerHTML += `
-        <div class="custom-button-config mb-2" data-index="${currentCount}">
-          <label class="form-label">Tlačítko ${currentCount + 1}:</label>
-          <input type="text" class="form-control custom-button-name" placeholder="Název tlačítka" required>
-          <input type="text" class="form-control custom-button-bgcolor" placeholder="Barva tlačítka" required>
-          <input type="text" class="form-control custom-button-textcolor" placeholder="Barva písma" required>
-          <input type="url" class="form-control custom-button-url" placeholder="URL" required>
-          <button type="button" class="btn btn-sm btn-danger mt-1" onclick="removeCustomButtonConfig(${currentCount})">Odstranit tlačítko</button>
-          <hr>
-        </div>`;
-    }
-    
-    function removeCustomButtonConfig(index) {
-      const container = document.getElementById('customButtonsConfig');
-      const configs = document.querySelectorAll('.custom-button-config');
-      configs[index].remove();
-      // Re-index remaining
-      document.querySelectorAll('.custom-button-config').forEach((elem, idx) => {
-        elem.setAttribute('data-index', idx);
-        elem.querySelector('label.form-label').textContent = `Tlačítko ${idx + 1}:`;
-      });
-    }
-    
-    // Simple execCmd pro rich text editor v poznámkách klienta
-    function execCmd(command) {
-      document.execCommand(command, false, null);
     }
   </script>
 </body>

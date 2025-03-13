@@ -51,6 +51,14 @@
     .toolbar button {
       margin-right: 5px;
     }
+    /* Třída pro modály, které mají být vždy navrchu */
+    .modal-top {
+      z-index: 1100 !important;
+    }
+    /* Upravena hodnota z-indexu pro backdrop, aby se edit modal zobrazoval nad ním */
+    .modal-backdrop.show.top-backdrop {
+      z-index: 1090 !important;
+    }
   </style>
 </head>
 <body>
@@ -369,13 +377,13 @@
             <p id="clientEvaluation"></p>
           </div>
           <hr>
-          <!-- Úkoly klienta (stejná logika jako dashboard, ale filtrovaná) -->
+          <!-- Úkoly klienta (filtrované) -->
           <div id="clientTasksSection">
             <h6>Úkoly klienta</h6>
             <ul id="clientTasksList" class="list-group"></ul>
           </div>
           <hr>
-          <!-- Nová sekce: Události definované uživatelem -->
+          <!-- Události definované uživatelem -->
           <div id="clientEventsSection">
             <h6>Události</h6>
             <ul id="clientEventsList" class="list-group"></ul>
@@ -430,7 +438,6 @@
     */
     let clients = [];
     let calendarEvents = [];
-    // Původní nastavení prahových hodnot
     const defaultSettings = {
       evalThreshold: 7,
       planThreshold: 7,
@@ -452,7 +459,7 @@
     const appVersion = "1.0.4";
     
     let currentWeekStart = getStartOfWeek(new Date());
-    let currentClientId = null; // pro modal s detaily klienta
+    let currentClientId = null;
     
     document.addEventListener('DOMContentLoaded', () => {
       loadData();
@@ -479,7 +486,6 @@
       document.getElementById('todayDate').textContent = 'Dnes je: ' + today.toLocaleDateString();
     }
     
-    // Export dat jako soubor
     function exportDataAsFile() {
       const data = { clients, calendarEvents, settings };
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -600,7 +606,6 @@
         `Celkem klientů: ${total} | Hodnocení k aktualizaci: ${overdueEval} | Plány k aktualizaci: ${expiringPlans} | Smlouvy k obnovení: ${expiringContracts}`;
     }
     
-    // Renderování úkolů na dashboardu
     function renderTasks() {
       let tasks = [];
       clients.forEach(client => {
@@ -651,7 +656,6 @@
       document.getElementById('tasksList').innerHTML = tasksHTML;
     }
     
-    // Renderování úkolů v detailu klienta – stejná logika jako na dashboardu, jen filtrovaná pro konkrétního klienta
     function renderClientTasks(client) {
       let tasks = [];
       if (client.lastEvaluation) {
@@ -702,7 +706,6 @@
       document.getElementById('clientTasksList').innerHTML = tasksHTML;
     }
     
-    // Renderování událostí (uživatelsky definovaných) pro detail klienta
     function renderClientEvents(client) {
       let events = calendarEvents.filter(ev => ev.clientId === client.id);
       let html = events.length === 0 ? "<p>Žádné události.</p>" : "<ul class='list-group'>" + events.map(ev => {
@@ -1092,7 +1095,6 @@
       });
     }
     
-    // Modal editace plánu, kroku a smlouvy – funkce beze změny
     function editPlan(clientId, planId) {
       const client = clients.find(c => c.id === clientId);
       if (client) {
@@ -1338,7 +1340,6 @@
       return 'days-red';
     }
     
-    // Service Worker registrace
     function registerServiceWorker() {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./service-worker.js')
@@ -1382,7 +1383,6 @@
         .catch(err => console.error('Chyba při registraci Service Workeru:', err));
     }
     
-    // Notification API
     function requestNotificationPermission() {
       if ('Notification' in window) {
         if (Notification.permission === 'default') {
@@ -1470,7 +1470,6 @@
       });
     }
     
-    // Grafický kalendář – zobrazení týdne
     function getStartOfWeek(date) {
       const day = date.getDay();
       const adjustedDay = (day === 0 ? 7 : day);
@@ -1493,7 +1492,6 @@
       modal.hide();
     }
     
-    // V renderu grafického kalendáře se pro všechny události připojí jméno klienta (pro evaluace, plány, kroky, smlouvy i kalendářní události)
     function renderGraphicalCalendar() {
       const modalBody = document.getElementById('graphicalCalendarBody');
       modalBody.innerHTML = "";
@@ -1536,7 +1534,6 @@
         let day = new Date(currentWeekStart);
         day.setDate(currentWeekStart.getDate() + i);
         let eventsForDay = [];
-        // Pro uživatelské kalendářní události
         calendarEvents.forEach(ev => {
           const eventDate = new Date(ev.date);
           if (eventDate.toDateString() === day.toDateString()) {
@@ -1553,7 +1550,6 @@
             eventsForDay.push({ title: title, id: ev.id, type: 'calendar' });
           }
         });
-        // Pro události generované z klientských dat
         clients.forEach(client => {
           if (client.lastEvaluation) {
             const evalInfo = calculateEvalDays(client.lastEvaluation);
@@ -1594,7 +1590,6 @@
             evDiv.style.borderRadius = "4px";
             evDiv.style.cursor = "pointer";
             evDiv.textContent = ev.title;
-            // Pokud je událost typu "calendar", umožníme úpravu; u ostatních upozorníme, že nelze upravit
             evDiv.onclick = () => {
               if (ev.type === 'calendar') {
                 editCalendarEvent(ev.id);
@@ -1636,6 +1631,7 @@
       URL.revokeObjectURL(url);
     }
     
+    // Hlavní úprava – zajistíme, aby se modál editace události zobrazoval nad všemi ostatními
     function editCalendarEvent(eventId) {
       const eventObj = calendarEvents.find(ev => ev.id === eventId);
       if (eventObj) {
@@ -1643,7 +1639,10 @@
         document.getElementById('editCalendarDate').value = eventObj.date;
         document.getElementById('editCalendarDetails').value = eventObj.details;
         document.getElementById('editCalendarId').value = eventId;
-        const modal = new bootstrap.Modal(document.getElementById('editCalendarModal'));
+        const modalEl = document.getElementById('editCalendarModal');
+        // Přidáme třídu pro vyšší z-index
+        modalEl.classList.add('modal-top');
+        const modal = new bootstrap.Modal(modalEl);
         modal.show();
       }
     }
@@ -1654,7 +1653,6 @@
       modal.hide();
     }
     
-    // Funkce pro přepínače v detailu klienta
     function updateEventClientSelect() {
       const select = document.getElementById('eventClientSelect');
       select.innerHTML = '<option value="">-- Nezařadit --</option>';
@@ -1725,7 +1723,6 @@
       document.execCommand(command, false, null);
     }
     
-    // Funkce pro otevření a zavření modálu detailu klienta
     function renderClientButtons() {
       const container = document.getElementById('clientButtonsContainer');
       container.innerHTML = "";

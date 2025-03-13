@@ -73,10 +73,10 @@
       </div>
     </div>
     
-    <!-- Lišta klientů (zobrazí se pouze pokud jsou klienti) -->
+    <!-- Lišta klientů -->
     <div id="clientButtonsContainer" class="mb-4"></div>
     
-    <!-- Úkoly k vyřízení -->
+    <!-- Úkoly k vyřízení (dashboard) -->
     <div class="card mb-4">
       <div class="card-body">
         <h5>Úkoly k vyřízení</h5>
@@ -84,7 +84,7 @@
       </div>
     </div>
     
-    <!-- Nová sekce Kalendář -->
+    <!-- Kalendář -->
     <div class="card mb-4">
       <div class="card-body">
         <h5>Kalendář</h5>
@@ -113,7 +113,7 @@
       </div>
     </div>
     
-    <!-- Export/Import, Nastavení a Grafický kalendář -->
+    <!-- Export/Import, Nastavení, Grafický kalendář -->
     <div class="mb-4">
       <button class="btn btn-primary" onclick="exportDataAsFile()">Export dat</button>
       <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">Import dat</button>
@@ -122,7 +122,7 @@
       <input type="file" id="importFile" style="display:none" onchange="importData(event)">
     </div>
     
-    <!-- Formulář pro přidání nového klienta -->
+    <!-- Přidání nového klienta -->
     <div class="card mb-4">
       <div class="card-header">
         Přidat nového klienta
@@ -147,7 +147,7 @@
       <input type="text" id="searchInput" class="form-control" placeholder="Hledat klienta podle jména" onkeyup="filterClients()">
     </div>
     
-    <!-- Globální přepínač pro skrytí hotových položek -->
+    <!-- Přepínač pro skrytí hotových položek -->
     <div class="mb-3 form-check">
       <input type="checkbox" class="form-check-input" id="hideCompleted" onchange="renderClients()">
       <label class="form-check-label" for="hideCompleted">Skrýt hotové položky</label>
@@ -163,7 +163,7 @@
   </div>
   
   <!-- Modály -->
-  <!-- Nastavení modal -->
+  <!-- Nastavení -->
   <div class="modal" tabindex="-1" id="settingsModal">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -201,12 +201,12 @@
               <label for="settingsNotificationInterval" class="form-label">Interval kontroly notifikací (minuty):</label>
               <input type="number" class="form-control" id="settingsNotificationInterval" min="1" required>
             </div>
-            <!-- Sekce pro přizpůsobitelná tlačítka -->
+            <!-- Přizpůsobitelná tlačítka -->
             <fieldset class="border p-2 mb-3">
               <legend class="w-auto">Přizpůsobitelná tlačítka</legend>
               <div id="customButtonsConfig"></div>
               <button type="button" class="btn btn-sm btn-secondary" onclick="addCustomButtonConfig()">Přidat tlačítko</button>
-              <p class="form-text">Maximálně 5 tlačítek. Pokud není provedeno nastavení, zobrazí se výchozí tlačítko.</p>
+              <p class="form-text">Maximálně 5 tlačítek. Pokud není nastaveno, zobrazí se výchozí tlačítko.</p>
             </fieldset>
             <button type="submit" class="btn btn-primary">Uložit nastavení</button>
             <button type="button" class="btn btn-danger" onclick="resetData()">Resetovat data</button>
@@ -217,7 +217,7 @@
     </div>
   </div>
   
-  <!-- Editace plánu modal -->
+  <!-- Editace plánu -->
   <div class="modal" tabindex="-1" id="editPlanModal">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -252,7 +252,7 @@
     </div>
   </div>
   
-  <!-- Editace kroku modal -->
+  <!-- Editace kroku -->
   <div class="modal" tabindex="-1" id="editStepModal">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -284,7 +284,7 @@
     </div>
   </div>
   
-  <!-- Editace smlouvy modal -->
+  <!-- Editace smlouvy -->
   <div class="modal" tabindex="-1" id="editContractModal">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -310,7 +310,7 @@
     </div>
   </div>
   
-  <!-- Editace kalendářní události modal -->
+  <!-- Editace kalendářní události -->
   <div class="modal" tabindex="-1" id="editCalendarModal">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -340,7 +340,7 @@
     </div>
   </div>
   
-  <!-- Grafický kalendář modal -->
+  <!-- Grafický kalendář -->
   <div class="modal" tabindex="-1" id="graphicalCalendarModal">
     <div class="modal-dialog modal-xl">
       <div class="modal-content">
@@ -355,7 +355,7 @@
     </div>
   </div>
   
-  <!-- Modal: Detaily klienta -->
+  <!-- Detaily klienta -->
   <div class="modal" tabindex="-1" id="clientDetailsModal">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
@@ -369,9 +369,16 @@
             <p id="clientEvaluation"></p>
           </div>
           <hr>
+          <!-- Úkoly klienta (stejná logika jako dashboard, ale filtrovaná) -->
           <div id="clientTasksSection">
             <h6>Úkoly klienta</h6>
             <ul id="clientTasksList" class="list-group"></ul>
+          </div>
+          <hr>
+          <!-- Nová sekce: Události definované uživatelem -->
+          <div id="clientEventsSection">
+            <h6>Události</h6>
+            <ul id="clientEventsList" class="list-group"></ul>
           </div>
           <hr>
           <div id="clientNotesSection">
@@ -557,7 +564,6 @@
       } else {
         settings = { ...defaultSettings };
       }
-      // Ensure customButtons exists
       if (!settings.customButtons) {
         settings.customButtons = defaultSettings.customButtons;
       }
@@ -594,7 +600,7 @@
         `Celkem klientů: ${total} | Hodnocení k aktualizaci: ${overdueEval} | Plány k aktualizaci: ${expiringPlans} | Smlouvy k obnovení: ${expiringContracts}`;
     }
     
-    // Upravená verze renderTasks
+    // Renderování úkolů na dashboardu
     function renderTasks() {
       let tasks = [];
       clients.forEach(client => {
@@ -617,9 +623,7 @@
                 const daysLeftStep = calculateDaysLeft(step.date);
                 if (daysLeftStep <= settings.stepThreshold) {
                   let taskText = `Krok "${step.description}" u plánu "${plan.name}" (klient ${client.name}) končí za <span class="${getDaysClass(daysLeftStep)}">${daysLeftStep} dní</span>`;
-                  if (step.completed) {
-                    taskText += " (hotový)";
-                  }
+                  if (step.completed) taskText += " (hotový)";
                   tasks.push(taskText);
                 }
               });
@@ -643,20 +647,11 @@
           tasks.push(`Událost "${event.title}" končí za <span class="${getDaysClass(daysLeft)}">${daysLeft} dní</span>`);
         }
       });
-      let tasksHTML = "";
-      if (tasks.length === 0) {
-        tasksHTML = "<p>Žádné úkoly k vyřízení.</p>";
-      } else {
-        tasksHTML = "<ul class='list-group'>";
-        tasks.forEach(task => {
-          tasksHTML += `<li class="list-group-item">${task}</li>`;
-        });
-        tasksHTML += "</ul>";
-      }
+      let tasksHTML = tasks.length === 0 ? "<p>Žádné úkoly k vyřízení.</p>" : "<ul class='list-group'>" + tasks.map(task => `<li class="list-group-item">${task}</li>`).join("") + "</ul>";
       document.getElementById('tasksList').innerHTML = tasksHTML;
     }
     
-    // Funkce pro zobrazení úkolů specifických pro daného klienta v detailu
+    // Renderování úkolů v detailu klienta – stejná logika jako na dashboardu, jen filtrovaná pro konkrétního klienta
     function renderClientTasks(client) {
       let tasks = [];
       if (client.lastEvaluation) {
@@ -677,11 +672,15 @@
             plan.steps.forEach(step => {
               const daysLeftStep = calculateDaysLeft(step.date);
               if (daysLeftStep <= settings.stepThreshold) {
-                tasks.push(`Krok "${step.description}" u plánu "${plan.name}" končí za <span class="${getDaysClass(daysLeftStep)}">${daysLeftStep} dní</span>${step.completed ? " (hotový)" : ""}`);
+                let taskText = `Krok "${step.description}" u plánu "${plan.name}" končí za <span class="${getDaysClass(daysLeftStep)}">${daysLeftStep} dní</span>`;
+                if (step.completed) taskText += " (hotový)";
+                tasks.push(taskText);
               }
             });
           }
         });
+      } else {
+        tasks.push(`<span style="color:red; font-weight:bold;">Klient ${client.name} nemá individuální plán.</span>`);
       }
       if (client.contractExpiration) {
         const contractDaysLeft = calculateDaysLeft(client.contractExpiration);
@@ -699,17 +698,20 @@
           }
         }
       });
-      let tasksHTML = "";
-      if (tasks.length === 0) {
-        tasksHTML = "<p>Žádné úkoly k vyřízení.</p>";
-      } else {
-        tasksHTML = "<ul class='list-group'>";
-        tasks.forEach(task => {
-          tasksHTML += `<li class="list-group-item">${task}</li>`;
-        });
-        tasksHTML += "</ul>";
-      }
+      let tasksHTML = tasks.length === 0 ? "<p>Žádné úkoly k vyřízení.</p>" : "<ul class='list-group'>" + tasks.map(task => `<li class="list-group-item">${task}</li>`).join("") + "</ul>";
       document.getElementById('clientTasksList').innerHTML = tasksHTML;
+    }
+    
+    // Renderování událostí (uživatelsky definovaných) pro detail klienta
+    function renderClientEvents(client) {
+      let events = calendarEvents.filter(ev => ev.clientId === client.id);
+      let html = events.length === 0 ? "<p>Žádné události.</p>" : "<ul class='list-group'>" + events.map(ev => {
+        return `<li class="list-group-item d-flex justify-content-between align-items-center">
+                  ${ev.title} - ${new Date(ev.date).toLocaleDateString()}${ ev.details ? " ("+ev.details+")" : "" }
+                  <button class="btn btn-sm btn-secondary" onclick="editCalendarEvent('${ev.id}')">Upravit</button>
+                </li>`;
+      }).join("") + "</ul>";
+      document.getElementById('clientEventsList').innerHTML = html;
     }
     
     function renderCalendar() {
@@ -1037,9 +1039,7 @@
                 if (hideCompleted && step.completed) return;
                 const daysLeftStep = calculateDaysLeft(step.date);
                 let stepText = `${step.description} - ${new Date(step.date).toLocaleDateString()}`;
-                if (step.completed) {
-                  stepText += " (hotový)";
-                }
+                if (step.completed) stepText += " (hotový)";
                 clientHTML += `<li class="list-group-item d-flex justify-content-between align-items-center">
                                 ${stepText}
                                 <div>
@@ -1092,7 +1092,7 @@
       });
     }
     
-    // Funkce pro modal editace plánu, kroku a smlouvy
+    // Modal editace plánu, kroku a smlouvy – funkce beze změny
     function editPlan(clientId, planId) {
       const client = clients.find(c => c.id === clientId);
       if (client) {
@@ -1239,9 +1239,7 @@
       document.getElementById('settingsCalendarThreshold').value = settings.calendarThreshold;
       document.getElementById('settingsEnableNotifications').checked = settings.notificationsEnabled;
       document.getElementById('settingsNotificationInterval').value = settings.notificationInterval;
-      
       renderCustomButtonsConfig();
-      
       const modal = new bootstrap.Modal(document.getElementById('settingsModal'));
       modal.show();
     }
@@ -1261,7 +1259,6 @@
       settings.calendarThreshold = parseInt(document.getElementById('settingsCalendarThreshold').value, 10);
       settings.notificationsEnabled = document.getElementById('settingsEnableNotifications').checked;
       settings.notificationInterval = parseInt(document.getElementById('settingsNotificationInterval').value, 10);
-      
       const customButtons = [];
       const configContainers = document.querySelectorAll('.custom-button-config');
       configContainers.forEach(container => {
@@ -1341,7 +1338,7 @@
       return 'days-red';
     }
     
-    // Service Worker registrace s notifikací nové verze
+    // Service Worker registrace
     function registerServiceWorker() {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./service-worker.js')
@@ -1473,7 +1470,7 @@
       });
     }
     
-    // Grafický kalendář – zobrazení celého týdne (pondělí až neděle)
+    // Grafický kalendář – zobrazení týdne
     function getStartOfWeek(date) {
       const day = date.getDay();
       const adjustedDay = (day === 0 ? 7 : day);
@@ -1496,6 +1493,7 @@
       modal.hide();
     }
     
+    // V renderu grafického kalendáře se pro všechny události připojí jméno klienta (pro evaluace, plány, kroky, smlouvy i kalendářní události)
     function renderGraphicalCalendar() {
       const modalBody = document.getElementById('graphicalCalendarBody');
       modalBody.innerHTML = "";
@@ -1538,6 +1536,7 @@
         let day = new Date(currentWeekStart);
         day.setDate(currentWeekStart.getDate() + i);
         let eventsForDay = [];
+        // Pro uživatelské kalendářní události
         calendarEvents.forEach(ev => {
           const eventDate = new Date(ev.date);
           if (eventDate.toDateString() === day.toDateString()) {
@@ -1554,6 +1553,7 @@
             eventsForDay.push({ title: title, id: ev.id, type: 'calendar' });
           }
         });
+        // Pro události generované z klientských dat
         clients.forEach(client => {
           if (client.lastEvaluation) {
             const evalInfo = calculateEvalDays(client.lastEvaluation);
@@ -1565,13 +1565,13 @@
             client.plans.forEach(plan => {
               const planDate = new Date(plan.expirationDate);
               if (planDate.toDateString() === day.toDateString()) {
-                eventsForDay.push({ title: `Plán: ${plan.name}`, id: 'plan_' + plan.id, type: 'plan' });
+                eventsForDay.push({ title: `Plán: ${plan.name} - ${client.name}`, id: 'plan_' + plan.id, type: 'plan' });
               }
               if (plan.steps) {
                 plan.steps.forEach(step => {
                   const stepDate = new Date(step.date);
                   if (stepDate.toDateString() === day.toDateString()) {
-                    eventsForDay.push({ title: `Krok: ${step.description}`, id: 'step_' + step.id, type: 'step' });
+                    eventsForDay.push({ title: `Krok: ${step.description} - ${client.name}`, id: 'step_' + step.id, type: 'step' });
                   }
                 });
               }
@@ -1587,16 +1587,21 @@
         if (eventsForDay.length > 0) {
           eventsForDay.forEach(ev => {
             const evDiv = document.createElement('div');
-            evDiv.style.backgroundColor = ev.type === 'calendar' ? 'blue' : 'gray';
+            evDiv.style.backgroundColor = (ev.type === 'calendar') ? 'blue' : 'gray';
             evDiv.style.color = "white";
             evDiv.style.padding = "2px 4px";
             evDiv.style.marginBottom = "2px";
             evDiv.style.borderRadius = "4px";
-            evDiv.style.cursor = (ev.type === 'calendar') ? "pointer" : "default";
+            evDiv.style.cursor = "pointer";
             evDiv.textContent = ev.title;
-            if (ev.type === 'calendar') {
-              evDiv.onclick = () => editCalendarEvent(ev.id);
-            }
+            // Pokud je událost typu "calendar", umožníme úpravu; u ostatních upozorníme, že nelze upravit
+            evDiv.onclick = () => {
+              if (ev.type === 'calendar') {
+                editCalendarEvent(ev.id);
+              } else {
+                alert('Tuto událost nelze upravit.');
+              }
+            };
             td.appendChild(evDiv);
           });
         } else {
@@ -1643,128 +1648,13 @@
       }
     }
     
-    // Funkce pro zavření modálu editace kalendářní události
     function hideEditCalendarModal() {
       const modalEl = document.getElementById('editCalendarModal');
       const modal = bootstrap.Modal.getInstance(modalEl);
       modal.hide();
     }
     
-    // FUNKCE PRO MODAL DETALÍ KLIENTA
-    function renderClientButtons() {
-      const container = document.getElementById('clientButtonsContainer');
-      container.innerHTML = "";
-      if (clients.length === 0) return;
-      clients.forEach(client => {
-        const btn = document.createElement('button');
-        btn.className = "btn btn-info me-2";
-        btn.textContent = client.name;
-        btn.onclick = () => openClientDetailsModal(client.id);
-        container.appendChild(btn);
-      });
-    }
-    
-    function openClientDetailsModal(clientId) {
-      currentClientId = clientId;
-      const client = clients.find(c => c.id === clientId);
-      if (!client) return;
-      document.getElementById('clientDetailsTitle').textContent = "Detaily: " + client.name;
-      document.getElementById('clientBirthdate').textContent = "Narozen: " + new Date(client.birthdate).toLocaleDateString();
-      if (client.lastEvaluation) {
-        const evalInfo = calculateEvalDays(client.lastEvaluation);
-        document.getElementById('clientEvaluation').innerHTML = `Poslední hodnocení: ${new Date(client.lastEvaluation).toLocaleDateString()} | Další: ${evalInfo.nextEvaluation.toLocaleDateString()} (<span class="${getDaysClass(evalInfo.daysLeft)}">${evalInfo.daysLeft} dní</span>)`;
-      } else {
-        document.getElementById('clientEvaluation').textContent = "Hodnocení nebylo provedeno.";
-      }
-      document.getElementById('clientNotes').innerHTML = client.notes || "";
-      document.getElementById('clientOther').innerHTML = client.other || "";
-      if (!client.checkboxes) {
-        client.checkboxes = [];
-      }
-      renderClientCheckboxes(client);
-      renderClientTasks(client);
-      const modal = new bootstrap.Modal(document.getElementById('clientDetailsModal'));
-      modal.show();
-    }
-    
-    function closeClientDetailsModal() {
-      const modalEl = document.getElementById('clientDetailsModal');
-      const modal = bootstrap.Modal.getInstance(modalEl);
-      modal.hide();
-    }
-    
-    function saveClientDetails() {
-      const client = clients.find(c => c.id === currentClientId);
-      if (!client) return;
-      client.notes = document.getElementById('clientNotes').innerHTML;
-      client.other = document.getElementById('clientOther').innerHTML;
-      saveData();
-      renderClients();
-      renderClientButtons();
-      updateEventClientSelect();
-      closeClientDetailsModal();
-    }
-    
-    function renderClientCheckboxes(client) {
-      const container = document.getElementById('clientCheckboxesList');
-      container.innerHTML = "";
-      client.checkboxes.forEach((checkbox, index) => {
-        const div = document.createElement('div');
-        div.className = "form-check d-flex align-items-center";
-        
-        const input = document.createElement('input');
-        input.type = "checkbox";
-        input.className = "form-check-input";
-        input.id = `client_${client.id}_checkbox_${index}`;
-        input.checked = checkbox.checked;
-        input.onchange = function() {
-          checkbox.checked = input.checked;
-          saveData();
-        };
-        
-        const label = document.createElement('label');
-        label.className = "form-check-label";
-        label.htmlFor = input.id;
-        label.textContent = checkbox.label;
-        
-        div.appendChild(input);
-        div.appendChild(label);
-        
-        const deleteBtn = document.createElement('button');
-        deleteBtn.textContent = "Smazat";
-        deleteBtn.className = "btn btn-sm btn-danger ms-2";
-        deleteBtn.onclick = function() {
-          deleteClientCheckbox(client.id, index);
-        };
-        div.appendChild(deleteBtn);
-        
-        container.appendChild(div);
-      });
-    }
-    
-    function deleteClientCheckbox(clientId, index) {
-      const client = clients.find(c => c.id === clientId);
-      if (client && client.checkboxes) {
-        client.checkboxes.splice(index, 1);
-        saveData();
-        renderClientCheckboxes(client);
-      }
-    }
-    
-    function addClientCheckbox() {
-      const labelInput = document.getElementById('newCheckboxLabel');
-      const labelText = labelInput.value.trim();
-      if (!labelText) return;
-      const client = clients.find(c => c.id === currentClientId);
-      if (!client) return;
-      if (!client.checkboxes) client.checkboxes = [];
-      client.checkboxes.push({ label: labelText, checked: false });
-      labelInput.value = "";
-      renderClientCheckboxes(client);
-      saveData();
-    }
-    
-    // Funkce pro aktualizaci seznamu klientů v selectu pro události
+    // Funkce pro přepínače v detailu klienta
     function updateEventClientSelect() {
       const select = document.getElementById('eventClientSelect');
       select.innerHTML = '<option value="">-- Nezařadit --</option>';
@@ -1773,7 +1663,6 @@
       });
     }
     
-    // Funkce pro vykreslení přizpůsobitelných tlačítek na dashboardu
     function renderCustomButtons() {
       const container = document.getElementById('customButtonsContainer');
       container.innerHTML = "";
@@ -1790,7 +1679,6 @@
       }
     }
     
-    // Funkce pro vykreslení konfigurace přizpůsobitelných tlačítek v nastavení
     function renderCustomButtonsConfig() {
       const container = document.getElementById('customButtonsConfig');
       container.innerHTML = "";
@@ -1833,9 +1721,116 @@
       renderCustomButtonsConfig();
     }
     
-    // Příkazy pro rich text editaci
     function execCmd(command) {
       document.execCommand(command, false, null);
+    }
+    
+    // Funkce pro otevření a zavření modálu detailu klienta
+    function renderClientButtons() {
+      const container = document.getElementById('clientButtonsContainer');
+      container.innerHTML = "";
+      if (clients.length === 0) return;
+      clients.forEach(client => {
+        const btn = document.createElement('button');
+        btn.className = "btn btn-info me-2";
+        btn.textContent = client.name;
+        btn.onclick = () => openClientDetailsModal(client.id);
+        container.appendChild(btn);
+      });
+    }
+    
+    function openClientDetailsModal(clientId) {
+      currentClientId = clientId;
+      const client = clients.find(c => c.id === clientId);
+      if (!client) return;
+      document.getElementById('clientDetailsTitle').textContent = "Detaily: " + client.name;
+      document.getElementById('clientBirthdate').textContent = "Narozen: " + new Date(client.birthdate).toLocaleDateString();
+      if (client.lastEvaluation) {
+        const evalInfo = calculateEvalDays(client.lastEvaluation);
+        document.getElementById('clientEvaluation').innerHTML = `Poslední hodnocení: ${new Date(client.lastEvaluation).toLocaleDateString()} | Další: ${evalInfo.nextEvaluation.toLocaleDateString()} (<span class="${getDaysClass(evalInfo.daysLeft)}">${evalInfo.daysLeft} dní</span>)`;
+      } else {
+        document.getElementById('clientEvaluation').textContent = "Hodnocení nebylo provedeno.";
+      }
+      document.getElementById('clientNotes').innerHTML = client.notes || "";
+      document.getElementById('clientOther').innerHTML = client.other || "";
+      if (!client.checkboxes) client.checkboxes = [];
+      renderClientCheckboxes(client);
+      renderClientTasks(client);
+      renderClientEvents(client);
+      const modal = new bootstrap.Modal(document.getElementById('clientDetailsModal'));
+      modal.show();
+    }
+    
+    function closeClientDetailsModal() {
+      const modalEl = document.getElementById('clientDetailsModal');
+      const modal = bootstrap.Modal.getInstance(modalEl);
+      modal.hide();
+    }
+    
+    function saveClientDetails() {
+      const client = clients.find(c => c.id === currentClientId);
+      if (!client) return;
+      client.notes = document.getElementById('clientNotes').innerHTML;
+      client.other = document.getElementById('clientOther').innerHTML;
+      saveData();
+      renderClients();
+      renderClientButtons();
+      updateEventClientSelect();
+      closeClientDetailsModal();
+    }
+    
+    function renderClientCheckboxes(client) {
+      const container = document.getElementById('clientCheckboxesList');
+      container.innerHTML = "";
+      client.checkboxes.forEach((checkbox, index) => {
+        const div = document.createElement('div');
+        div.className = "form-check d-flex align-items-center";
+        const input = document.createElement('input');
+        input.type = "checkbox";
+        input.className = "form-check-input";
+        input.id = `client_${client.id}_checkbox_${index}`;
+        input.checked = checkbox.checked;
+        input.onchange = function() {
+          checkbox.checked = input.checked;
+          saveData();
+        };
+        const label = document.createElement('label');
+        label.className = "form-check-label";
+        label.htmlFor = input.id;
+        label.textContent = checkbox.label;
+        div.appendChild(input);
+        div.appendChild(label);
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = "Smazat";
+        deleteBtn.className = "btn btn-sm btn-danger ms-2";
+        deleteBtn.onclick = function() {
+          deleteClientCheckbox(client.id, index);
+        };
+        div.appendChild(deleteBtn);
+        container.appendChild(div);
+      });
+    }
+    
+    function deleteClientCheckbox(clientId, index) {
+      const client = clients.find(c => c.id === clientId);
+      if (client && client.checkboxes) {
+        client.checkboxes.splice(index, 1);
+        saveData();
+        renderClientCheckboxes(client);
+      }
+    }
+    
+    function addClientCheckbox() {
+      const labelInput = document.getElementById('newCheckboxLabel');
+      const labelText = labelInput.value.trim();
+      if (!labelText) return;
+      const client = clients.find(c => c.id === currentClientId);
+      if (!client) return;
+      if (!client.checkboxes) client.checkboxes = [];
+      client.checkboxes.push({ label: labelText, checked: false });
+      labelInput.value = "";
+      renderClientCheckboxes(client);
+      saveData();
     }
   </script>
 </body>
